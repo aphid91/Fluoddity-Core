@@ -30,4 +30,6 @@ Activate with:
 
 This is a "single blind" rewrite where features are built from requirements rather than
 by copying the original implementation. Reference code is consulted only when explicitly
-needed for specific components.
+needed for specific components. The user will tell you if you should access any reference files.
+Make things as simple as possible, but no simpler.
+
