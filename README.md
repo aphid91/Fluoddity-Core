@@ -33,3 +33,16 @@ by copying the original implementation. Reference code is consulted only when ex
 needed for specific components. The user will tell you if you should access any reference files.
 Make things as simple as possible, but no simpler.
 
+## Hot Reload Requirements
+
+This is a teaching tool where users will frequently tinker with shaders and see results update
+immediately without restarting the program:
+
+1. **Isolated shader initialization** - Use helper methods for shader/buffer setup so they can be
+   re-initialized mid-stream
+2. **Graceful compilation failures** - Failed shader compilation must not crash the program. Log
+   errors to console and keep the previous working program
+3. **Safe uniform setting** - Use `tryset()` from `utilities/gl_helpers.py` for all uniforms.
+   Uniforms may be optimized out when shaders are modified, and ModernGL throws errors for
+   missing uniforms
+

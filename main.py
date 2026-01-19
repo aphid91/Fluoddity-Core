@@ -22,7 +22,10 @@ class App:
         self.ctx = moderngl.create_context()
         self.ctx.enable(moderngl.BLEND)
 
+        from camera import Camera
         from particle_system import ParticleSystem
+
+        self.camera = Camera(self.ctx)
         self.system = ParticleSystem(self.ctx)
 
     def poll_events(self):
