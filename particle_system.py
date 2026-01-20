@@ -55,7 +55,7 @@ class ParticleSystem:
         data[:, 3] = np.random.uniform(-0.001, 0.001, ENTITY_COUNT)  # vel.y
 
         # Size
-        data[:, 4] = 0.01  # size
+        data[:, 4] = 0.005  # size
 
         # Cohort
         data[:, 5] = np.random.uniform(0, 1, ENTITY_COUNT)  # cohort
@@ -134,8 +134,11 @@ class ParticleSystem:
 
     def advance(self):
         """Run one simulation step: update entities, create brush, update canvas."""
+        self.ctx.memory_barrier()
         self.update_entities()
+        self.ctx.memory_barrier()
         self.create_brush()
+        self.ctx.memory_barrier()
         self.update_canvas()
 
     def update_entities(self):

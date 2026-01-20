@@ -33,7 +33,10 @@ class App:
 
     def run(self):
         while not glfw.window_should_close(self.window):
-            self.ctx.clear(0.1, 0.1, 0.1, 1.0)
+            self.system.advance()
+            self.ctx.screen.use()
+            self.ctx.clear(0., 0., 0., 1.0)
+            self.camera.render_texture(self.system.brush_texture, self.ctx.screen)
 
             self.poll_events()
 

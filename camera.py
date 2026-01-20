@@ -1,4 +1,5 @@
 import moderngl
+import numpy as np
 from utilities.gl_helpers import read_shader, tryset
 
 
@@ -25,19 +26,17 @@ class Camera:
 
             # Create fullscreen quad VAO if it doesn't exist
             if self.vao is None:
-                vertices = self.ctx.buffer(data=bytes([
-                    # Triangle 1
-                    255, 0,    # Bottom-left (-1, -1)
-                    255, 255,  # Top-right (1, 1)
-                    0, 0,      # Bottom-right (-1, 1)
-                    # Triangle 2
-                    255, 0,    # Bottom-left (-1, -1)
-                    0, 255,    # Top-left (1, -1)
-                    255, 255,  # Top-right (1, 1)
-                ]))
+                vertices = self.ctx.buffer(np.array([
+                    -1, -1,
+                     1, -1,
+                     1,  1,
+                    -1, -1,
+                     1,  1,
+                    -1,  1,
+                ], dtype=np.float32).tobytes())
                 self.vao = self.ctx.vertex_array(
                     self.program,
-                    [(vertices, '2u1', 'in_position')]
+                    [(vertices, '2f', 'in_position')]
                 )
 
             print("Camera shaders reloaded successfully")
