@@ -15,7 +15,7 @@ float gaussian(vec2 pos, float sigma) {
 
 void main() {
     float kernel_func = gaussian(uv - 0.5, 0.163);
-    if (length(uv - 0.5) > 0.5 || view_col.w == 0) {
+    if (length(uv - 0.5) > 0.5 || view_col.w == 0 || frame_count == 0) {
         discard;
     }
     vec2 vel = pos_vel.zw;
