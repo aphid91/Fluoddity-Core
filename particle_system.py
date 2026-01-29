@@ -3,7 +3,7 @@ import numpy as np
 import moderngl
 from utilities.gl_helpers import read_shader, tryset
 
-ENTITY_COUNT = 100000
+ENTITY_COUNT = 600000
 SIZE_OF_ENTITY_STRUCT = 48
 
 

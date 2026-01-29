@@ -3,7 +3,7 @@ import moderngl
 
 
 class App:
-    def __init__(self, width=1280, height=720, title="Fluoddity-Core"):
+    def __init__(self, width=1024, height=1024, title="Fluoddity-Core"):
         if not glfw.init():
             raise RuntimeError("Failed to initialize GLFW")
 

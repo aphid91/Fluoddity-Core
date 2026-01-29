@@ -60,7 +60,7 @@ const Rule MY_RULE = Rule(FourierCenter[10](
 #define COHORTS 64
 #define HAZARD_RATE 0.
 #define SQRT_WORLD_SIZE 1
-#define SENSOR_ANGLE .45
+#define SENSOR_ANGLE -0.49
 #define SENSOR_DISTANCE .6717398166656
 
 #define RULE_SEED  0
@@ -212,6 +212,9 @@ void reset(uint index){
     vec2 pos=vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
     vec2 vel=0.01*.005*(vec2(hash(vec2(cohort_val,index)),hash(vec2(cohort_val,pos.y)))*2-1);
     vec4 color=vec4(0,0,1,.045);
+
+    //DEBUG 
+    pos *=.01;
     //store to persistent entity buffer
     entities[index]=Entity(pos,vel,size,cohort_val/float(COHORTS),float[2](0,0),color);
 }
