@@ -31,47 +31,17 @@ class ParticleSystem:
         # Entity buffer
         self.entity_buffer = self.ctx.buffer(reserve=ENTITY_COUNT * SIZE_OF_ENTITY_STRUCT)
 
-        # Fullscreen quad for canvas update
+        # Fullscreen quad for canvas update (initialized in reload)
         self.quad_vbo = None
         self.canvas_vao = None
 
         # Frame counter
         self.frame_count = 0
 
-        # Initialize shaders
+        # Initialize gpu resources
         self.reload()
 
-        # Initialize entities with random positions and velocities
-        self._init_entities()
 
-    def _init_entities(self):
-        """Initialize entity buffer with random data for testing."""
-        # Entity struct: pos(2) + vel(2) + size(1) + cohort(1) + padding(2) + color(4) = 12 floats
-        data = np.zeros((ENTITY_COUNT, 12), dtype=np.float32)
-
-        # Random positions in [-1, 1]
-        data[:, 0] = np.random.uniform(-1, 1, ENTITY_COUNT)  # pos.x
-        data[:, 1] = np.random.uniform(-1, 1, ENTITY_COUNT)  # pos.y
-
-        # Small random velocities
-        data[:, 2] = np.random.uniform(-0.001, 0.001, ENTITY_COUNT)  # vel.x
-        data[:, 3] = np.random.uniform(-0.001, 0.001, ENTITY_COUNT)  # vel.y
-
-        # Size
-        data[:, 4] = 0.005  # size
-
-        # Cohort
-        data[:, 5] = np.random.uniform(0, 1, ENTITY_COUNT)  # cohort
-
-        # Padding (indices 6, 7) - leave as zeros
-
-        # Color (RGBA)
-        data[:, 8] = 1.0   # R
-        data[:, 9] = 1.0   # G
-        data[:, 10] = 1.0  # B
-        data[:, 11] = 1.0  # A
-
-        self.entity_buffer.write(data.tobytes())
 
     def reload(self):
         """Reload all shaders from disk. Safe to call mid-execution."""
@@ -106,7 +76,7 @@ class ParticleSystem:
     def _reload_canvas_update(self):
         """Reload canvas update shaders."""
         try:
-            vert_source = read_shader('shaders/canvas.vert')
+            vert_source = read_shader('shaders/fullscreen_quad.vert')
             frag_source = read_shader('shaders/canvas.frag')
             new_program = self.ctx.program(
                 vertex_shader=vert_source,
@@ -137,6 +107,7 @@ class ParticleSystem:
 
     def advance(self):
         """Run one simulation step: update entities, create brush, update canvas."""
+        #memory barriers make sure memory writes are visible to subsequent steps
         self.ctx.memory_barrier()
         self.update_entities()
         self.ctx.memory_barrier()
@@ -148,12 +119,9 @@ class ParticleSystem:
     def reset(self):
         """Reset simulation state."""
         self.frame_count = 0
-        self._init_entities()
 
     def update_entities(self):
         """Dispatch compute shader to update entity positions."""
-        if self.entity_update_program is None:
-            return
 
         self.entity_buffer.bind_to_storage_buffer(0)
 
@@ -166,14 +134,13 @@ class ParticleSystem:
         workgroups = math.ceil(ENTITY_COUNT / 256)
         self.entity_update_program.run(workgroups, 1, 1)
 
-        # Memory barrier to ensure writes are visible
-        self.ctx.memory_barrier()
 
     def create_brush(self):
         """Splat all entities to brush texture as gaussian dots."""
         if self.brush_splat_program is None:
             return
 
+        #clear the brush texture each frame
         self.brush_fbo.use()
         self.brush_fbo.clear(0.0, 0.0, 0.0, 0.0)
 
@@ -189,16 +156,16 @@ class ParticleSystem:
                (float(self.canvas_size[0]), float(self.canvas_size[1])))
         tryset(self.brush_splat_program, 'frame_count', self.frame_count)
 
-        # Instanced rendering: 4 vertices per quad, ENTITY_COUNT instances
+        # Instanced rendering: 4 vertices per entity with ENTITY_COUNT instances
         # No VAO needed - brush.vert generates vertices from gl_VertexID and gl_InstanceID
         vao = self.ctx.vertex_array(self.brush_splat_program, [])
         vao.render(moderngl.TRIANGLE_FAN, vertices=4, instances=ENTITY_COUNT)
 
         # Restore default blend mode
-        self.ctx.blend_func = moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+        self.ctx.disable(moderngl.BLEND)
 
     def update_canvas(self):
-        """Mix brush texture into canvas texture with trail persistence."""
+        """Mix brush texture into canvas texture with trail persistence and diffusion."""
         if self.canvas_update_program is None or self.canvas_vao is None:
             return
 

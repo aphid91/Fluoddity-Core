@@ -2,7 +2,7 @@ import moderngl
 import numpy as np
 from utilities.gl_helpers import read_shader, tryset
 
-
+#Simple camera for displaying a texture to the screen
 class Camera:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -13,7 +13,7 @@ class Camera:
     def reload(self):
         """Reload shaders from disk. Safe to call mid-execution."""
         try:
-            vert_source = read_shader('shaders/camera.vert')
+            vert_source = read_shader('shaders/fullscreen_quad.vert')
             frag_source = read_shader('shaders/camera.frag')
 
             new_program = self.ctx.program(
@@ -21,7 +21,6 @@ class Camera:
                 fragment_shader=frag_source
             )
 
-            # Only replace program if compilation succeeded
             self.program = new_program
 
             # Create fullscreen quad VAO if it doesn't exist

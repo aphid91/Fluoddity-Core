@@ -22,26 +22,19 @@ class App:
         self.camera = Camera(self.ctx)
         self.system = ParticleSystem(self.ctx)
 
-        glfw.set_key_callback(self.window, self._on_key)
-
-    def _on_key(self, window, key, scancode, action, mods):
-        if action == glfw.PRESS:
-            if key == glfw.KEY_R:
-                self.system.reset()
-
-    def poll_events(self):
-        glfw.poll_events()
-
     def run(self):
         while not glfw.window_should_close(self.window):
+            #physics update hardcoded to 180hz
             for i in range(3):
                 self.system.advance()
+            
             self.ctx.screen.use()
             self.ctx.clear(0., 0., 0., 1.0)
+            
+            #display brush texture with camera.frag
             self.camera.render_texture(self.system.brush_texture, self.ctx.screen)
 
-            self.poll_events()
-
+            glfw.poll_events()
             glfw.swap_buffers(self.window)
 
         glfw.terminate()
