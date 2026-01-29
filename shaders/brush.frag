@@ -4,6 +4,7 @@ in vec2 uv;
 in vec4 pos_vel;
 in vec4 view_col;
 out vec4 brush_out;
+uniform int frame_count;
 
 float gaussian(vec2 pos, float sigma) {
     float sigma2 = sigma * sigma;

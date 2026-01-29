@@ -1,4 +1,4 @@
-# Hive-Core
+# Fluoddity-Core
 
 A minimal, teaching-focused rebuild of the SimScratch simulation engine core.
 
@@ -23,7 +23,7 @@ This repository contains a from-scratch rebuild of SimScratch's core engine with
 
 Activate with:
 ```
-& C:\Users\jgeld\Documents\KodeLife\Hive-Core\Scratch.venv\Scripts\Activate.ps1
+& C:\Users\jgeld\Documents\KodeLife\Fluoddity-Core\Scratch.venv\Scripts\Activate.ps1
 ```
 
 ## Development Approach

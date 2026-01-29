@@ -1179,7 +1179,7 @@ class UI:
 
         if expanded:
             imgui.text_wrapped(
-                "Hive Explorer is like an interactive lava lamp. "
+                "Fluoddity is like an interactive lava lamp. "
                 "Thousands of particles interact resulting in a great variety of forms and patterns. "
                 "Thumb through the presets in File->Load to see what is possible."
             )
@@ -1205,7 +1205,7 @@ class UI:
             imgui.spacing()
             if imgui.collapsing_header("Rules"):
                 imgui.text_wrapped(
-                    "There is no fixed particle behavior in Hive Explorer. "
+                    "There is no fixed particle behavior in Fluoddity. "
                     "Each particle has a 'Rule' which determines how it moves in response to nearby trails. "
                     "These rules can be mutated and evolved. In particle selection mouse mode, click on a particle to set it's rule as the 'active Rule'. "
                     "Now every particle will adopt that rule (with mutations). right click to undo setting a new target rule."
@@ -1223,7 +1223,7 @@ class UI:
             imgui.spacing()
             if imgui.collapsing_header("Trails"):
                 imgui.text_wrapped(
-                    "Particles in hive explorer can't directly 'see' each other. "
+                    "Particles in Fluoddity can't directly 'see' each other. "
                     "Instead, they interact by leaving pheremone trails as they move, like ants. "
                     "These trails accumulate on the 'Canvas' where particles can see them. Trails spread out and fade over time. "
                     "You can try writing your own pheremone trails to the canvas with 'Draw Trails' mouse mode (Preferences -> mouse mode)"

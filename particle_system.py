@@ -35,6 +35,9 @@ class ParticleSystem:
         self.quad_vbo = None
         self.canvas_vao = None
 
+        # Frame counter
+        self.frame_count = 0
+
         # Initialize shaders
         self.reload()
 
@@ -140,6 +143,12 @@ class ParticleSystem:
         self.create_brush()
         self.ctx.memory_barrier()
         self.update_canvas()
+        self.frame_count += 1
+
+    def reset(self):
+        """Reset simulation state."""
+        self.frame_count = 0
+        self._init_entities()
 
     def update_entities(self):
         """Dispatch compute shader to update entity positions."""
@@ -147,6 +156,10 @@ class ParticleSystem:
             return
 
         self.entity_buffer.bind_to_storage_buffer(0)
+
+        tryset(self.entity_update_program, 'canvas_texture', 0)
+        tryset(self.entity_update_program, 'frame_count', self.frame_count)
+        self.canvas_texture.use(location=0)
 
         # Dispatch enough workgroups to cover all entities
         # local_size_x = 256, so we need ceil(ENTITY_COUNT / 256) workgroups
@@ -174,6 +187,7 @@ class ParticleSystem:
         # Set uniforms
         tryset(self.brush_splat_program, 'canvas_resolution',
                (float(self.canvas_size[0]), float(self.canvas_size[1])))
+        tryset(self.brush_splat_program, 'frame_count', self.frame_count)
 
         # Instanced rendering: 4 vertices per quad, ENTITY_COUNT instances
         # No VAO needed - brush.vert generates vertices from gl_VertexID and gl_InstanceID
@@ -193,6 +207,7 @@ class ParticleSystem:
 
         tryset(self.canvas_update_program, 'brush_texture', 0)
         tryset(self.canvas_update_program, 'canvas_texture', 1)
+        tryset(self.canvas_update_program, 'frame_count', self.frame_count)
 
         self.brush_texture.use(location=0)
         self.canvas_texture.use(location=1)
