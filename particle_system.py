@@ -3,12 +3,12 @@ import numpy as np
 import moderngl
 from utilities.gl_helpers import read_shader, tryset
 
-ENTITY_COUNT = 600000
+ENTITY_COUNT = 150000
 SIZE_OF_ENTITY_STRUCT = 48
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(1024, 1024)):
+    def __init__(self, ctx, canvas_size=(512, 512)):
         self.ctx = ctx
         self.canvas_size = canvas_size
 

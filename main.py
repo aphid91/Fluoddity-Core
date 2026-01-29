@@ -1,16 +1,12 @@
 import glfw
 import moderngl
-
+from camera import Camera
+from particle_system import ParticleSystem
 
 class App:
-    def __init__(self, width=1024, height=1024, title="Fluoddity-Core"):
+    def __init__(self, width=512, height=512, title="Fluoddity-Core"):
         if not glfw.init():
             raise RuntimeError("Failed to initialize GLFW")
-
-        glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-        glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-        glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-        glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, True)
 
         self.window = glfw.create_window(width, height, title, None, None)
         if not self.window:
@@ -22,8 +18,6 @@ class App:
         self.ctx = moderngl.create_context()
         self.ctx.enable(moderngl.BLEND)
 
-        from camera import Camera
-        from particle_system import ParticleSystem
 
         self.camera = Camera(self.ctx)
         self.system = ParticleSystem(self.ctx)
@@ -40,7 +34,8 @@ class App:
 
     def run(self):
         while not glfw.window_should_close(self.window):
-            self.system.advance()
+            for i in range(3):
+                self.system.advance()
             self.ctx.screen.use()
             self.ctx.clear(0., 0., 0., 1.0)
             self.camera.render_texture(self.system.brush_texture, self.ctx.screen)

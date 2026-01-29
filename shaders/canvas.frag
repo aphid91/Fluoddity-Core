@@ -1,6 +1,6 @@
 #version 430
 
-#define TRAIL_PERSISTENCE 0.981
+#define TRAIL_PERSISTENCE 0.9819999933242798
 #define TRAIL_DIFFUSION 1.
 uniform sampler2D brush_texture;
 uniform sampler2D canvas_texture;

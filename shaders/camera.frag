@@ -12,6 +12,9 @@ vec3 hsv2rgb(vec3 c) {
 void main() {
     
     vec4 canv = texture(tex, uv);
-    fragColor = vec4(hsv2rgb(vec3(atan(canv.y,canv.x)/3.1415/2.,.8,20*length(canv.xy))),1);
-    fragColor.xyz = pow(fragColor.xyz, vec3(1./2.2));
+    fragColor = vec4(3*8*hsv2rgb(vec3(atan(canv.y,canv.x)/3.1415/2.,.75,length(canv.xy))),1);
+    float len = length(fragColor.xyz);
+    if (len > 0.0) {
+        fragColor.xyz /= pow(len, 0.575);
+    }
 }
