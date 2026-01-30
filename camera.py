@@ -1,6 +1,6 @@
 import moderngl
 import numpy as np
-from utilities.gl_helpers import read_shader, tryset
+from gl_utils import read_shader, tryset
 
 #Simple camera for displaying a texture to the screen
 class Camera:

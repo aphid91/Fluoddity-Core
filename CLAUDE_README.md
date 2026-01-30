@@ -11,13 +11,8 @@ This repository contains a from-scratch rebuild of SimScratch's core engine with
 
 ## Structure
 
-- `reference/` - Source files from original SimScratch for selective reference
   - Base Python files
-  - `scripts/` - Migration and utility scripts
-  - `services/` - Core services (arrow debug, config saver, entity picker, etc.)
   - `shaders/` - GLSL shader files (.frag, .vert, .glsl)
-  - `state/` - State management modules
-  - `utilities/` - Helper utilities (GL helpers, frame assembly, recording, etc.)
 
 ## Virtual Environment
 
@@ -42,7 +37,7 @@ immediately without restarting the program:
    re-initialized mid-stream
 2. **Graceful compilation failures** - Failed shader compilation must not crash the program. Log
    errors to console and keep the previous working program
-3. **Safe uniform setting** - Use `tryset()` from `utilities/gl_helpers.py` for all uniforms.
+3. **Safe uniform setting** - Use `tryset()` from `gl_utils.py` for all uniforms.
    Uniforms may be optimized out when shaders are modified, and ModernGL throws errors for
    missing uniforms
 

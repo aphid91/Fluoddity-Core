@@ -13,8 +13,7 @@ struct Rule {
     FourierCenter centers[10];
 };
 
-//constant rule copied from hungryHungryHippos.json. This governs each how particle responds to trails
-
+//Constant rule coefficients copied from hungryHungryHippos.json. This governs each how particle responds to trails
 const Rule CURRENT_RULE_CONST = Rule(FourierCenter[10](
     FourierCenter(
         vec4(1.2064379453659058, 1.067139744758606, 1.2132219076156616, -0.12498120963573456),
@@ -58,22 +57,25 @@ const Rule CURRENT_RULE_CONST = Rule(FourierCenter[10](
     )
 ));
 
-
-//constant physics parameters copied from hungryHungryHippos.json
+//-------------Constant physics parameters copied from hungryHungryHippos.json-----------------
 #define COHORTS 8
-#define HAZARD_RATE 0.
-#define SQRT_WORLD_SIZE .5
+#define SQRT_WORLD_SIZE .5 //just a scaling parameter that resizes distances to have a constant size in pixels
+#define RULE_SEED  0.4862983671108597
+
+//basics
+#define SENSOR_GAIN 0.9078231453895569
 #define SENSOR_ANGLE -0.728590726852417
 #define SENSOR_DISTANCE -1.0521172285079956
-
-#define RULE_SEED  0.4862983671108597
 #define MUTATION_SCALE 0.14000000059604645
-#define SENSOR_GAIN 0.9078231453895569
-#define AXIAL_FORCE 0.35925570130348206
-#define LATERAL_FORCE -1.293696641921997
+//forces
 #define GLOBAL_FORCE_MULT -0.3406755328178406
 #define DRAG 0.5608117580413818
 #define STRAFE_POWER 0.07624772191047668
+//advanced
+#define AXIAL_FORCE 0.35925570130348206
+#define LATERAL_FORCE -1.293696641921997
+#define HAZARD_RATE 0.
+
 #define PI 3.1415926
 
 uniform sampler2D canvas_texture;
