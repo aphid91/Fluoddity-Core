@@ -1,16 +1,22 @@
 import math
 import numpy as np
 import moderngl
-from gl_utils import read_shader, tryset
+from gl_utils import read_shader, tryset, load_config, set_config_uniform, set_rule_uniform
 
-ENTITY_COUNT = 150000
+WORLD_SIZE = 0.25
+SQRT_WORLD_SIZE = 0.5
+ENTITY_COUNT = int(600000*WORLD_SIZE)
+CANVAS_DIM = int(1024*SQRT_WORLD_SIZE)
 SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(512, 512)):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='HungryHungryHippos.json'):
+        
         self.ctx = ctx
         self.canvas_size = canvas_size
+        self.config_path = config_path
+        self.config = load_config(config_path)
 
         # Programs (initialized in reload)
         self.entity_update_program = None
@@ -125,6 +131,8 @@ class ParticleSystem:
 
         self.entity_buffer.bind_to_storage_buffer(0)
 
+        set_config_uniform(self.entity_update_program, self.config)
+        set_rule_uniform(self.entity_update_program, self.config['rule'])
         tryset(self.entity_update_program, 'canvas_texture', 0)
         tryset(self.entity_update_program, 'frame_count', self.frame_count)
         self.canvas_texture.use(location=0)
@@ -172,6 +180,7 @@ class ParticleSystem:
         # Render to back buffer, reading from front
         self.canvas_fbo_back.use()
 
+        set_config_uniform(self.canvas_update_program, self.config)
         tryset(self.canvas_update_program, 'brush_texture', 0)
         tryset(self.canvas_update_program, 'canvas_texture', 1)
         tryset(self.canvas_update_program, 'frame_count', self.frame_count)

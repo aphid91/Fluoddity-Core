@@ -1,7 +1,23 @@
 #version 430
 
-#define TRAIL_PERSISTENCE 0.9819999933242798
-#define TRAIL_DIFFUSION 1.
+struct ConfigData {
+    int cohorts;
+    float rule_seed;
+    float sensor_gain;
+    float sensor_angle;
+    float sensor_distance;
+    float mutation_scale;
+    float global_force_mult;
+    float drag;
+    float strafe_power;
+    float axial_force;
+    float lateral_force;
+    float hazard_rate;
+    float trail_persistence;
+    float trail_diffusion;
+};
+uniform ConfigData config;
+
 uniform sampler2D brush_texture;
 uniform sampler2D canvas_texture;
 uniform int frame_count;
@@ -30,6 +46,6 @@ vec4 getBlur(vec2 pos, sampler2D sam,float diffusion_constant) {
 void main() {
     if(frame_count<2){canvas_out=vec4(0,0,0,1);return;}
     vec4 brush_color = texture(brush_texture, uv);
-    vec4 canvas_color = getBlur(uv,canvas_texture,TRAIL_DIFFUSION);//texture(canvas_texture, uv);
-    canvas_out = canvas_color * TRAIL_PERSISTENCE + (1.0 - TRAIL_PERSISTENCE) * vec4(brush_color.xy,0,1);
+    vec4 canvas_color = getBlur(uv,canvas_texture,config.trail_diffusion);//texture(canvas_texture, uv);
+    canvas_out = canvas_color * config.trail_persistence + (1.0 - config.trail_persistence) * vec4(brush_color.xy,0,1);
 }
