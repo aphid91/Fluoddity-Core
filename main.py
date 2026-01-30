@@ -25,7 +25,7 @@ class App:
     def run(self):
         while not glfw.window_should_close(self.window):
             #physics update hardcoded to 180hz
-            for i in range(3):
+            for i in range(30):
                 self.system.advance()
             
             self.ctx.screen.use()
