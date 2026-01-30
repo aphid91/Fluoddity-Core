@@ -2,7 +2,6 @@
 
 in vec2 uv;
 in vec4 pos_vel;
-in vec4 view_col;
 out vec4 brush_out;
 uniform int frame_count;
 
@@ -15,7 +14,7 @@ float gaussian(vec2 pos, float sigma) {
 
 void main() {
     float kernel_func = gaussian(uv - 0.5, 0.163);
-    if (length(uv - 0.5) > 0.5 || view_col.w == 0 || frame_count == 0) {
+    if (length(uv - 0.5) > 0.5 || frame_count == 0) {
         discard;
     }
     vec2 vel = pos_vel.zw;

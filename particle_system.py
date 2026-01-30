@@ -4,7 +4,7 @@ import moderngl
 from gl_utils import read_shader, tryset
 
 ENTITY_COUNT = 150000
-SIZE_OF_ENTITY_STRUCT = 48
+SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:

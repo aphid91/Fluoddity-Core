@@ -17,7 +17,6 @@ layout(std430, binding = 0) buffer EntityBuffer {
 
 out vec2 uv;
 out vec4 pos_vel;
-out vec4 view_col;
 
 void main() {
     int instance_id = gl_InstanceID;
@@ -47,5 +46,4 @@ void main() {
 
     uv = particle_uv;
     pos_vel = vec4(entity_pos, entity_vel);
-    view_col = entities[instance_id].color;
 }

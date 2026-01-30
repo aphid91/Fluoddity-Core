@@ -85,10 +85,8 @@ struct Entity {
     vec2 pos;
     vec2 vel;
     float size;
-    float cohort;
-    float padding[2];
-    vec4 color;
-};  // Total: 48 bytes (12 floats)
+    float padding;
+};  // Total: 24 bytes (6 floats)
 
 layout(std430, binding = 0) buffer EntityBuffer {
     Entity entities[];
@@ -219,7 +217,7 @@ void reset(uint index){
     vec4 color=vec4(0,0,1,.045);
 
     //store to persistent entity buffer
-    entities[index]=Entity(pos,vel,size,cohort_val/float(COHORTS),float[2](0,0),color);
+    entities[index]=Entity(pos,vel,size,0);
 }
 
 //randomly change noise function parameters, scaled by parameter amount. 
@@ -256,11 +254,10 @@ vec4 black_box(vec2 L,vec2 R,Rule rule){
 //--L and R: velocity field measurements from left sensor and right sensor.
 //--axis: forward vector that defines our orientation.
 //--rule: coefficients for the noise function that dictates entity behavior.
-//RETURNS:
+//RETURNS (via out parameters):
 //--force: A "push" vector that will be added to entity.vel
 //--strafe: A "hop" vector that will be added to entity.pos and have no effect on velocity
-//--color: vec2 to be used as parameters in a coloring function
-void calculate_entity_behavior( vec2 L,vec2 R, vec2 axis, Rule rule, out vec2 force, out vec2 strafe, out vec2 color){
+void calculate_entity_behavior( vec2 L,vec2 R, vec2 axis, Rule rule, out vec2 force, out vec2 strafe){
 
     //build a local coordinate frame where "axis" is forward.
     vec2 forward = safenorm(axis);
@@ -283,7 +280,6 @@ void calculate_entity_behavior( vec2 L,vec2 R, vec2 axis, Rule rule, out vec2 fo
     force = (forward * force.x * AXIAL_FORCE) + (left * force.y * LATERAL_FORCE);
     strafe = (forward * strafe.x * AXIAL_FORCE) + (left * strafe.y * LATERAL_FORCE);
 
-    color = baseterm.xy+(mirrorterm.xy); //Just an arbitrary function of blackbox output. Reuses force terms.
     return;
 }
 
@@ -328,22 +324,13 @@ void main() {
     //compute entity action
     vec2 strafe =vec2(0);//set by calculate_...
     vec2 force = vec2(0);//set by calculate_...
-    vec2 col_params = vec2(0);//set by calculate_...
-    calculate_entity_behavior(ltap.xy,rtap.xy,orientation,current_rule,force,strafe,col_params);
+    calculate_entity_behavior(ltap.xy,rtap.xy,orientation,current_rule,force,strafe);
 
     //rescale output forces
     force *= 1./SQRT_WORLD_SIZE*GLOBAL_FORCE_MULT/400.;
     strafe *= 1./SQRT_WORLD_SIZE*GLOBAL_FORCE_MULT/20.;
 
 
-    //e.color is interpreted as vec4(hue,saturation,brightness,alpha)
-    //We just set brightness to 1 and modulate hue and saturation
-
-
-    e.color.x = hash(vec2(floor(cohort))); //just assign a random hue to each cohort
-    e.color.y = sin(col_params.y)/2.+.5;//saturation must be 0..1
-    e.color.z=1;//brightness 1.
-    e.color.w=0.045; //low alpha
 
     //Accelerate: Apply drag and add force to e.vel,
     e.vel = e.vel*DRAG + force;
