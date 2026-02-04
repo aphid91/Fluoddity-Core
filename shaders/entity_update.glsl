@@ -36,7 +36,7 @@ struct ConfigData {
 uniform ConfigData config;
 
 #define PI 3.1415926
-#define SQRT_WORLD_SIZE .5 //Scaling parameter that resizes distances to have a constant size in pixels
+#define SQRT_WORLD_SIZE 0.5 //Scaling parameter that resizes distances to have a constant size in pixels
 
 uniform sampler2D canvas_texture;
 uniform int frame_count;
@@ -174,7 +174,6 @@ void reset(uint index){
     //set pos and vel to random values on a small disk
     vec2 pos=vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
     vec2 vel=0.01*.005*(vec2(hash(vec2(cohort_val,index)),hash(vec2(cohort_val,pos.y)))*2-1);
-    vec4 color=vec4(0,0,1,.045);
 
     //store to persistent entity buffer
     entities[index]=Entity(pos,vel,size,0);

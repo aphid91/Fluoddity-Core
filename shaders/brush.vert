@@ -6,10 +6,8 @@ struct Entity {
     vec2 pos;
     vec2 vel;
     float size;
-    float cohort;
-    float padding[2];
-    vec4 color;
-};  // Total: 48 bytes (12 floats)
+    float padding;
+};  // Total: 24 bytes (6 floats)
 
 layout(std430, binding = 0) buffer EntityBuffer {
     Entity entities[];

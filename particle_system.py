@@ -11,7 +11,7 @@ SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Butterflies.json'):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Searching.json'):
         
         self.ctx = ctx
         self.canvas_size = canvas_size
