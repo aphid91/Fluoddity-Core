@@ -1,10 +1,10 @@
 # Fluoddity-Core
 
-A minimal, teaching-focused rebuild of the SimScratch simulation engine core.
+A minimal, teaching-focused rebuild of the Fluoddity simulation engine core.
 
 ## Purpose
 
-This repository contains a from-scratch rebuild of SimScratch's core engine with:
+This repository contains a from-scratch rebuild of Fluoddity's core engine with:
 - Bare minimum feature set
 - Clean, educational code structure
 - Clear documentation for understanding key concepts
