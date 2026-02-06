@@ -36,7 +36,7 @@ struct ConfigData {
 uniform ConfigData config;
 
 #define PI 3.1415926
-#define SQRT_WORLD_SIZE 0.5 //Scaling parameter that resizes distances to have a constant size in pixels
+#define SQRT_WORLD_SIZE .5 //Scaling parameter that resizes distances to have a constant size in pixels
 
 uniform sampler2D canvas_texture;
 uniform int frame_count;
@@ -51,8 +51,10 @@ struct Entity {
 layout(std430, binding = 0) buffer EntityBuffer {
     Entity entities[];
 };
-
+//=========================================================================================
 //------------------------------------RANDOM / HASH / NOISE--------------------------------
+//====================================VVVVVVVVVVVVVVVVVVVVV================================
+
 // PCG hash - bit-exact across all platforms
 uint pcg_hash(uint seed) {
     uint state = seed * 747796405u + 2891336453u;
@@ -138,8 +140,9 @@ vec4 normalized_fourier_noise(vec4 pos, float seed) {
     vec4 noise = random_fourier_noise(pos, seed);
     return noise * 0.1 + 0.5;
 }
-
+//=====================================^^^^^^^^^^^^^^^^^^==================================
 //------------------------------------RANDOM / HASH / NOISE--------------------------------
+//=========================================================================================
 
 //rotate p around origin by angle a
 void pR(inout vec2 p, float a) {

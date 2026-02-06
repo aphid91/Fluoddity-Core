@@ -3,7 +3,7 @@ import numpy as np
 import moderngl
 from gl_utils import read_shader, tryset, load_config, set_config_uniform, set_rule_uniform
 
-WORLD_SIZE = 0.25
+WORLD_SIZE = .25
 SQRT_WORLD_SIZE = 0.5
 ENTITY_COUNT = int(600000*WORLD_SIZE)
 CANVAS_DIM = int(1024*SQRT_WORLD_SIZE)
@@ -11,7 +11,7 @@ SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Searching.json'):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='HungryHungryHippos.json'):
         
         self.ctx = ctx
         self.canvas_size = canvas_size
@@ -113,13 +113,16 @@ class ParticleSystem:
 
     def advance(self):
         """Run one simulation step: update entities, create brush, update canvas."""
-        #memory barriers make sure memory writes are visible to subsequent steps
+        #memory barriers make sure gpu memory writes are visible to subsequent steps
         self.ctx.memory_barrier()
         self.update_entities()
+
         self.ctx.memory_barrier()
         self.create_brush()
+
         self.ctx.memory_barrier()
         self.update_canvas()
+
         self.frame_count += 1
 
     def reset(self):
