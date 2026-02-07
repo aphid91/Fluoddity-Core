@@ -20,7 +20,7 @@ physics steps work like this:
 - A "brush" texture with the same dimensions as canvas acts as a staging area for these newly created trails.
 - We use instanced rendering with one instance per entity and additive blending.
 - Each particle draws a small gaussian kernel with color == (velocity_x, velocity_y, 0.01, 1) * kernel. (only the velocity terms are used currently, the other two are mostly placeholders)
-###Canvas Update
+### Canvas Update
 - The canvas update is a simple frag shader. Each frame, the trails diffuse and fade away, while we mix in the newly laid trails from brush.
 - diffusion is handled by a simple 4 neighbor weighted average of the canvas
 - trail fade is performed by mixing old trails (pre diffused) and new trails (from brush). Thus the equilibrium trail intensity is independent of the trail-persistence value
