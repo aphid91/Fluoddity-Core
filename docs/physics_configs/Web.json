@@ -11,6 +11,7 @@
     "global_force_mult": 0.35199999809265137,
     "sensor_distance": 0.7770000100135803,
     "trail_persistence": 0.9810000061988831,
+    "trail_diffusion": 1.0,
     "hazard_rate": 0.0
   },
   "slider_ranges": {

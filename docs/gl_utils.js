@@ -90,20 +90,21 @@ export function tryset(gl, program, name, value, typeHint) {
 }
 
 export function setConfigUniforms(gl, program, config) {
+    // cohorts is the only int uniform; all others are float in the shader
     tryset(gl, program, 'config.cohorts', config.cohorts);
-    tryset(gl, program, 'config.rule_seed', config.rule_seed);
-    tryset(gl, program, 'config.sensor_gain', config.sensor_gain);
-    tryset(gl, program, 'config.sensor_angle', config.sensor_angle);
-    tryset(gl, program, 'config.sensor_distance', config.sensor_distance);
-    tryset(gl, program, 'config.mutation_scale', config.mutation_scale);
-    tryset(gl, program, 'config.global_force_mult', config.global_force_mult);
-    tryset(gl, program, 'config.drag', config.drag);
-    tryset(gl, program, 'config.strafe_power', config.strafe_power);
-    tryset(gl, program, 'config.axial_force', config.axial_force);
-    tryset(gl, program, 'config.lateral_force', config.lateral_force);
-    tryset(gl, program, 'config.hazard_rate', config.hazard_rate);
-    tryset(gl, program, 'config.trail_persistence', config.trail_persistence);
-    tryset(gl, program, 'config.trail_diffusion', config.trail_diffusion);
+    tryset(gl, program, 'config.rule_seed', config.rule_seed, 'float');
+    tryset(gl, program, 'config.sensor_gain', config.sensor_gain, 'float');
+    tryset(gl, program, 'config.sensor_angle', config.sensor_angle, 'float');
+    tryset(gl, program, 'config.sensor_distance', config.sensor_distance, 'float');
+    tryset(gl, program, 'config.mutation_scale', config.mutation_scale, 'float');
+    tryset(gl, program, 'config.global_force_mult', config.global_force_mult, 'float');
+    tryset(gl, program, 'config.drag', config.drag, 'float');
+    tryset(gl, program, 'config.strafe_power', config.strafe_power, 'float');
+    tryset(gl, program, 'config.axial_force', config.axial_force, 'float');
+    tryset(gl, program, 'config.lateral_force', config.lateral_force, 'float');
+    tryset(gl, program, 'config.hazard_rate', config.hazard_rate, 'float');
+    tryset(gl, program, 'config.trail_persistence', config.trail_persistence, 'float');
+    tryset(gl, program, 'config.trail_diffusion', config.trail_diffusion, 'float');
 }
 
 export function setRuleUniforms(gl, program, rule) {
