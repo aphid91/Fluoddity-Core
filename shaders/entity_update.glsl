@@ -185,7 +185,7 @@ void reset(uint index){
 //randomly change noise function parameters, scaled by parameter 'amount'. 
 //Each cohort gets a unique mutation for any given rule
 void mutate_rule(inout Rule current_rule,float amount,float cohort){
-    float seed = hash(current_rule.centers[4].frequency.xy+current_rule.centers[7].amplitude.ys+current_rule.centers[1].frequency.zw)+cohort;
+    float seed = hash(current_rule.centers[4].frequency.xy+current_rule.centers[7].amplitude.yx+current_rule.centers[1].frequency.zw)+cohort;
 
     for(int i = 0; i < 10; i++) {
         vec4 amp_mutation = amount * (-1.0 + 2.0 * hash4(-.5+vec2(-i+seed,i)));

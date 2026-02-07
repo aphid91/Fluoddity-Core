@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluoddity</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #preset-selector {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 10;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #preset-selector:hover { border-color: #999; }
+        #preset-selector option { background: #222; color: #ccc; }
+        #error-display {
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            z-index: 10;
+            color: #f44;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 80vw;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <select id="preset-selector">
+        <option value="HungryHungryHippos">Hungry Hungry Hippos</option>
+        <option value="Searching">Searching</option>
+    </select>
+    <canvas id="canvas"></canvas>
+    <div id="error-display"></div>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
