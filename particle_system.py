@@ -11,7 +11,7 @@ SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='HungryHungryHippos.json'):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Pop.json'):
         
         self.ctx = ctx
         self.canvas_size = canvas_size
@@ -113,13 +113,18 @@ class ParticleSystem:
 
     def advance(self):
         """Run one simulation step: update entities, create brush, update canvas."""
+        
+        #The ordering here is a little weird. It doesn't matter so much, 
+        #but if I weren't trying to support legacy configs, the proper order would be:
+        #update_entities()
+        #create_brush()
+        #update_canvas()
+
         #memory barriers make sure gpu memory writes are visible to subsequent steps
         self.ctx.memory_barrier()
-        self.update_entities()
-
-        self.ctx.memory_barrier()
         self.create_brush()
-
+        self.ctx.memory_barrier()
+        self.update_entities()
         self.ctx.memory_barrier()
         self.update_canvas()
 

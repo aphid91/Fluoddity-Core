@@ -13,49 +13,46 @@ import {
     tryset, setConfigUniforms, setRuleUniforms, fetchShader
 } from './gl_utils.js';
 
-const WORLD_SIZE = 0.25 ;
-const SQRT_WORLD_SIZE = Math.sqrt(WORLD_SIZE);
-const ENTITY_COUNT = Math.floor(600000 * WORLD_SIZE);
-const CANVAS_DIM = Math.floor(1024 * SQRT_WORLD_SIZE);
-
-// Entity texture dimensions: smallest square that fits ENTITY_COUNT pixels
-const ENTITY_TEX_WIDTH = Math.ceil(Math.sqrt(ENTITY_COUNT));
-const ENTITY_TEX_HEIGHT = Math.ceil(ENTITY_COUNT / ENTITY_TEX_WIDTH);
-
-export { ENTITY_COUNT, CANVAS_DIM, ENTITY_TEX_WIDTH, ENTITY_TEX_HEIGHT, SQRT_WORLD_SIZE };
+// Derive all simulation constants from worldSize
+function computeConstants(worldSize, aspectRatio) {
+    const sqrtWorldSize = Math.sqrt(worldSize);
+    const entityCount = Math.floor(600000 * worldSize);
+    const canvasDim = Math.floor(1024 * sqrtWorldSize);
+    const sqrtAspect = Math.sqrt(aspectRatio);
+    const canvasWidth = Math.floor(canvasDim * sqrtAspect);
+    const canvasHeight = Math.floor(canvasDim / sqrtAspect);
+    const entityTexWidth = Math.ceil(Math.sqrt(entityCount));
+    const entityTexHeight = Math.ceil(entityCount / entityTexWidth);
+    return { worldSize, sqrtWorldSize, entityCount, canvasDim, canvasWidth, canvasHeight, entityTexWidth, entityTexHeight };
+}
 
 export class ParticleSystem {
-    constructor(gl, config, aspectRatio) {
+    constructor(gl, config, worldSize, aspectRatio) {
         this.gl = gl;
         this.config = config;
         this.frameCount = 0;
+        this.c = computeConstants(worldSize, aspectRatio);
 
-        // Canvas dimensions adjusted for viewport aspect ratio
-        // sqrt(aspect) factor preserves total pixel area
-        const sqrtAspect = Math.sqrt(aspectRatio);
-        this.canvasWidth = Math.floor(CANVAS_DIM * sqrtAspect);
-        this.canvasHeight = Math.floor(CANVAS_DIM / sqrtAspect);
-
-        // Programs (set in init())
+        // Programs (set in init(), persist across reinitGPU)
         this.entityUpdateProgram = null;
         this.brushProgram = null;
         this.canvasUpdateProgram = null;
         this.cameraProgram = null;
 
-        // Textures and FBOs (set in init())
-        this.entityTextures = [null, null];   // ping-pong
+        // GPU resources (set in _createGPUResources)
+        this.entityTextures = [null, null];
         this.entityFBOs = [null, null];
         this.entityPing = 0;
 
         this.brushTexture = null;
         this.brushFBO = null;
 
-        this.canvasTextures = [null, null];    // ping-pong
+        this.canvasTextures = [null, null];
         this.canvasFBOs = [null, null];
         this.canvasPing = 0;
 
-        // VAOs
         this.fullscreenQuadVAO = null;
+        this.canvasQuadVAO = null;
         this.brushVAO = null;
         this.cameraVAO = null;
     }
@@ -86,55 +83,69 @@ export class ParticleSystem {
         this.canvasUpdateProgram = createProgram(gl, fullscreenQuadVert, canvasFrag);
         this.cameraProgram = createProgram(gl, fullscreenQuadVert, cameraFrag);
 
-        // Create textures
-        this._createTextures();
-
-        // Create VAOs
-        this._createFullscreenQuadVAO();
-        this._createBrushVAO();
-        this._createCameraVAO();
+        // Create GPU resources
+        this._createGPUResources();
     }
 
-    _createTextures() {
-        const gl = this.gl;
+    reinitGPU(worldSize, aspectRatio) {
+        this.c = computeConstants(worldSize, aspectRatio);
+        this._destroyGPUResources();
+        this._createGPUResources();
+        this.frameCount = 0;
+    }
 
-        // Entity textures (ping-pong): ENTITY_TEX_WIDTH × ENTITY_TEX_HEIGHT, RGBA32F, NEAREST
+    _createGPUResources() {
+        const gl = this.gl;
+        const c = this.c;
+
+        // Entity textures (ping-pong)
         for (let i = 0; i < 2; i++) {
-            this.entityTextures[i] = createFloatTexture(gl, ENTITY_TEX_WIDTH, ENTITY_TEX_HEIGHT);
+            this.entityTextures[i] = createFloatTexture(gl, c.entityTexWidth, c.entityTexHeight);
             this.entityFBOs[i] = createFramebuffer(gl, this.entityTextures[i]);
         }
+        this.entityPing = 0;
 
         // Brush texture
-        this.brushTexture = createFloatTexture(gl, this.canvasWidth, this.canvasHeight);
+        this.brushTexture = createFloatTexture(gl, c.canvasWidth, c.canvasHeight);
         this.brushFBO = createFramebuffer(gl, this.brushTexture);
 
         // Canvas textures (ping-pong)
         for (let i = 0; i < 2; i++) {
-            this.canvasTextures[i] = createFloatTexture(gl, this.canvasWidth, this.canvasHeight);
+            this.canvasTextures[i] = createFloatTexture(gl, c.canvasWidth, c.canvasHeight);
             this.canvasFBOs[i] = createFramebuffer(gl, this.canvasTextures[i]);
         }
+        this.canvasPing = 0;
+
+        // VAOs
+        this._createFullscreenQuadVAOs();
+        this._createBrushVAO();
     }
 
-    _createFullscreenQuadVAO() {
+    _destroyGPUResources() {
         const gl = this.gl;
 
-        // Fullscreen quad: 2 triangles
+        for (let i = 0; i < 2; i++) {
+            if (this.entityTextures[i]) gl.deleteTexture(this.entityTextures[i]);
+            if (this.entityFBOs[i]) gl.deleteFramebuffer(this.entityFBOs[i]);
+            if (this.canvasTextures[i]) gl.deleteTexture(this.canvasTextures[i]);
+            if (this.canvasFBOs[i]) gl.deleteFramebuffer(this.canvasFBOs[i]);
+        }
+        if (this.brushTexture) gl.deleteTexture(this.brushTexture);
+        if (this.brushFBO) gl.deleteFramebuffer(this.brushFBO);
+
+        if (this.fullscreenQuadVAO) gl.deleteVertexArray(this.fullscreenQuadVAO);
+        if (this.canvasQuadVAO) gl.deleteVertexArray(this.canvasQuadVAO);
+        if (this.cameraVAO) gl.deleteVertexArray(this.cameraVAO);
+        if (this.brushVAO) gl.deleteVertexArray(this.brushVAO);
+    }
+
+    _createFullscreenQuadVAOs() {
         const vertices = new Float32Array([
-            -1, -1,
-             1, -1,
-             1,  1,
-            -1, -1,
-             1,  1,
-            -1,  1,
+            -1, -1,  1, -1,  1,  1,
+            -1, -1,  1,  1, -1,  1,
         ]);
-
-        // Create VAO for entity update program
         this.fullscreenQuadVAO = this._makeQuadVAO(this.entityUpdateProgram, vertices);
-
-        // Create VAO for canvas update program (same geometry, different program)
         this.canvasQuadVAO = this._makeQuadVAO(this.canvasUpdateProgram, vertices);
-
-        // Create VAO for camera program
         this.cameraVAO = this._makeQuadVAO(this.cameraProgram, vertices);
     }
 
@@ -160,10 +171,7 @@ export class ParticleSystem {
     _createBrushVAO() {
         const gl = this.gl;
 
-        // 4 vertices for a TRIANGLE_FAN quad
-        // Each vertex: offset (vec2) + uv (vec2)
         const quadData = new Float32Array([
-            // offset.x, offset.y, uv.x, uv.y
             -1, -1,  0, 0,
              1, -1,  1, 0,
              1,  1,  1, 1,
@@ -192,13 +200,9 @@ export class ParticleSystem {
         gl.bindVertexArray(null);
     }
 
-    _createCameraVAO() {
-        // Already created in _createFullscreenQuadVAO
-    }
-
     advance() {
-        this.updateEntities();
         this.createBrush();
+        this.updateEntities();
         this.updateCanvas();
         this.frameCount++;
     }
@@ -206,67 +210,61 @@ export class ParticleSystem {
     updateEntities() {
         const gl = this.gl;
         const prog = this.entityUpdateProgram;
+        const c = this.c;
         const readIdx = this.entityPing;
         const writeIdx = 1 - readIdx;
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.entityFBOs[writeIdx]);
-        gl.viewport(0, 0, ENTITY_TEX_WIDTH, ENTITY_TEX_HEIGHT);
+        gl.viewport(0, 0, c.entityTexWidth, c.entityTexHeight);
 
-        // Bind entity texture (ping) to unit 0
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.entityTextures[readIdx]);
         tryset(gl, prog, 'entity_texture', 0);
 
-        // Bind canvas texture to unit 1
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.canvasTextures[this.canvasPing]);
         tryset(gl, prog, 'canvas_texture', 1);
 
-        // Set uniforms
         setConfigUniforms(gl, prog, this.config);
         setRuleUniforms(gl, prog, this.config.rule);
         tryset(gl, prog, 'frame_count', this.frameCount);
-        tryset(gl, prog, 'entity_count', ENTITY_COUNT);
-        tryset(gl, prog, 'entity_tex_width', ENTITY_TEX_WIDTH);
+        tryset(gl, prog, 'entity_count', c.entityCount);
+        tryset(gl, prog, 'entity_tex_width', c.entityTexWidth);
+        tryset(gl, prog, 'sqrt_world_size', c.sqrtWorldSize, 'float');
 
-        // Draw fullscreen quad
         gl.bindVertexArray(this.fullscreenQuadVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        // Swap ping-pong
         this.entityPing = writeIdx;
     }
 
     createBrush() {
         const gl = this.gl;
         const prog = this.brushProgram;
+        const c = this.c;
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.brushFBO);
-        gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
+        gl.viewport(0, 0, c.canvasWidth, c.canvasHeight);
 
-        // Clear brush texture
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        // Additive blending
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
-        // Bind entity texture
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.entityTextures[this.entityPing]);
         tryset(gl, prog, 'entity_texture', 0);
 
-        // Set uniforms
-        tryset(gl, prog, 'canvas_resolution', [this.canvasWidth, this.canvasHeight]);
+        tryset(gl, prog, 'canvas_resolution', [c.canvasWidth, c.canvasHeight]);
         tryset(gl, prog, 'frame_count', this.frameCount);
-        tryset(gl, prog, 'entity_tex_width', ENTITY_TEX_WIDTH);
+        tryset(gl, prog, 'entity_tex_width', c.entityTexWidth);
+        tryset(gl, prog, 'sqrt_world_size', c.sqrtWorldSize, 'float');
 
-        // Instanced draw: 4 vertices (TRIANGLE_FAN) × ENTITY_COUNT instances
         gl.bindVertexArray(this.brushVAO);
-        gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, ENTITY_COUNT);
+        gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, c.entityCount);
 
         gl.disable(gl.BLEND);
     }
@@ -274,32 +272,28 @@ export class ParticleSystem {
     updateCanvas() {
         const gl = this.gl;
         const prog = this.canvasUpdateProgram;
+        const c = this.c;
         const readIdx = this.canvasPing;
         const writeIdx = 1 - readIdx;
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.canvasFBOs[writeIdx]);
-        gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
+        gl.viewport(0, 0, c.canvasWidth, c.canvasHeight);
 
-        // Bind brush texture to unit 0
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.brushTexture);
         tryset(gl, prog, 'brush_texture', 0);
 
-        // Bind canvas texture (ping) to unit 1
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.canvasTextures[readIdx]);
         tryset(gl, prog, 'canvas_texture', 1);
 
-        // Set uniforms
         setConfigUniforms(gl, prog, this.config);
         tryset(gl, prog, 'frame_count', this.frameCount);
 
-        // Draw fullscreen quad
         gl.bindVertexArray(this.canvasQuadVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        // Swap ping-pong
         this.canvasPing = writeIdx;
     }
 
@@ -308,12 +302,11 @@ export class ParticleSystem {
         const prog = this.cameraProgram;
 
         gl.useProgram(prog);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // render to screen
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clearColor(0, 0, 0, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
-        // Bind brush texture
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.brushTexture);
         tryset(gl, prog, 'tex', 0);

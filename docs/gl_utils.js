@@ -72,15 +72,15 @@ function getUniformLocation(gl, program, name) {
     return cache[name];
 }
 
-export function tryset(gl, program, name, value) {
+export function tryset(gl, program, name, value, typeHint) {
     const loc = getUniformLocation(gl, program, name);
     if (loc === null) return;
 
     if (typeof value === 'number') {
-        if (Number.isInteger(value)) {
-            gl.uniform1i(loc, value);
-        } else {
+        if (typeHint === 'float' || !Number.isInteger(value)) {
             gl.uniform1f(loc, value);
+        } else {
+            gl.uniform1i(loc, value);
         }
     } else if (Array.isArray(value)) {
         if (value.length === 2) gl.uniform2f(loc, value[0], value[1]);

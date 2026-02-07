@@ -9,10 +9,10 @@ uniform int entity_tex_width;
 in vec2 a_offset;   // quad offset: e.g. (-1,-1), (1,-1), (1,1), (-1,1)
 in vec2 a_uv;       // quad UV: (0,0), (1,0), (1,1), (0,1)
 
+uniform float sqrt_world_size;
+
 out vec2 v_uv;
 out vec4 v_pos_vel;
-
-#define SQRT_WORLD_SIZE 0.28867513
 
 void main() {
     // Map gl_InstanceID to texel coordinate in entity texture
@@ -21,7 +21,7 @@ void main() {
 
     vec2 entity_pos = entity.xy;
     vec2 entity_vel = entity.zw;
-    float size = 0.0015 / SQRT_WORLD_SIZE;
+    float size = 0.0015 / sqrt_world_size;
 
     vec2 vertex_pos = entity_pos + a_offset * size;
 

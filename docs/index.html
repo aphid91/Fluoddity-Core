@@ -12,11 +12,16 @@
             width: 100vw;
             height: 100vh;
         }
-        #preset-selector {
+        #controls {
             position: fixed;
             top: 12px;
             right: 12px;
             z-index: 10;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        #controls select, #controls button {
             padding: 6px 12px;
             background: rgba(0, 0, 0, 0.6);
             color: #ccc;
@@ -26,23 +31,8 @@
             font-size: 14px;
             cursor: pointer;
         }
-        #preset-selector:hover { border-color: #999; }
-        #preset-selector option { background: #222; color: #ccc; }
-        #reset-button {
-            position: fixed;
-            top: 12px;
-            right: 220px;
-            z-index: 10;
-            padding: 6px 12px;
-            background: rgba(0, 0, 0, 0.6);
-            color: #ccc;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        #reset-button:hover { border-color: #999; }
+        #controls select:hover, #controls button:hover { border-color: #999; }
+        #controls select option { background: #222; color: #ccc; }
         #error-display {
             position: fixed;
             bottom: 12px;
@@ -58,8 +48,16 @@
     </style>
 </head>
 <body>
-    <button id="reset-button">Reset</button>
-    <select id="preset-selector"></select>
+    <div id="controls">
+        <select id="world-size-selector" title="World Size / Quality">
+            <option value="0.08" selected>.08 (Potato/Phone)</option>
+            <option value="0.25">.25 (Low)</option>
+            <option value="0.5">.5 (Medium)</option>
+            <option value="1.0">1.0 (Large)</option>
+        </select>
+        <select id="preset-selector"></select>
+        <button id="reset-button">Reset</button>
+    </div>
     <canvas id="canvas"></canvas>
     <div id="error-display"></div>
     <script type="module" src="main.js"></script>

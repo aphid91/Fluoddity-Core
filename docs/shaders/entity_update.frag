@@ -35,7 +35,8 @@ struct ConfigData {
 uniform ConfigData config;
 
 #define PI 3.1415926
-#define SQRT_WORLD_SIZE 0.28867513
+
+uniform float sqrt_world_size;
 
 uniform sampler2D entity_texture;  // current entity state (ping)
 uniform sampler2D canvas_texture;  // trail field
@@ -193,7 +194,7 @@ void main() {
     }
 
     // Sensor sampling
-    float sample_dist = 1.0 / SQRT_WORLD_SIZE * 0.005 * config.sensor_distance;
+    float sample_dist = 1.0 / sqrt_world_size * 0.005 * config.sensor_distance;
     vec2 orientation = safenorm(vel);
 
     vec2 left_sensor_offset = orientation * sample_dist;
@@ -211,7 +212,7 @@ void main() {
     mutate_rule(rule, config.mutation_scale, config.rule_seed + floor(cohort));
 
     // Rescale sensor values
-    float sensor_scaling = SQRT_WORLD_SIZE * 38.855 * config.sensor_gain;
+    float sensor_scaling = sqrt_world_size * 38.855 * config.sensor_gain;
     ltap *= sensor_scaling;
     rtap *= sensor_scaling;
 
@@ -221,8 +222,8 @@ void main() {
     calculate_entity_behavior(ltap.xy, rtap.xy, orientation, rule, force, strafe);
 
     // Rescale output forces
-    force *= 1.0 / SQRT_WORLD_SIZE * config.global_force_mult / 400.0;
-    strafe *= 1.0 / SQRT_WORLD_SIZE * config.global_force_mult / 20.0;
+    force *= 1.0 / sqrt_world_size * config.global_force_mult / 400.0;
+    strafe *= 1.0 / sqrt_world_size * config.global_force_mult / 20.0;
 
     // Accelerate
     vel = vel * config.drag + force;

@@ -16,7 +16,6 @@ async function main() {
         canvas.height = window.innerHeight;
     }
     resize();
-    window.addEventListener('resize', resize);
 
     // Get WebGL 2 context
     const gl = canvas.getContext('webgl2', { antialias: false });
@@ -62,9 +61,13 @@ async function main() {
         return;
     }
 
-    // Create and initialize particle system with viewport aspect ratio
+    // World size selector
+    const worldSizeSelector = document.getElementById('world-size-selector');
+    let worldSize = parseFloat(worldSizeSelector.value);
+
+    // Create and initialize particle system
     const aspectRatio = window.innerWidth / window.innerHeight;
-    const system = new ParticleSystem(gl, config, aspectRatio);
+    const system = new ParticleSystem(gl, config, worldSize, aspectRatio);
     try {
         await system.init();
     } catch (e) {
@@ -73,7 +76,14 @@ async function main() {
         return;
     }
 
-    // Preset selector handler — changes config without resetting particles
+    // World size change → full GPU reinit
+    worldSizeSelector.addEventListener('change', () => {
+        worldSize = parseFloat(worldSizeSelector.value);
+        const ar = window.innerWidth / window.innerHeight;
+        system.reinitGPU(worldSize, ar);
+    });
+
+    // Preset selector — changes config without resetting particles
     presetSelector.addEventListener('change', async () => {
         try {
             const newConfig = await loadPreset(presetSelector.value);
@@ -83,27 +93,31 @@ async function main() {
         }
     });
 
-    // Reset button handler
+    // Reset button
     const resetButton = document.getElementById('reset-button');
     resetButton.addEventListener('click', () => {
         system.reset();
     });
 
+    // Debounced resize → reinit with new aspect ratio
+    let resizeTimeout = null;
+    window.addEventListener('resize', () => {
+        resize();
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            const ar = window.innerWidth / window.innerHeight;
+            system.reinitGPU(worldSize, ar);
+        }, 300);
+    });
+
     // Render loop
     function frame() {
-        // Resize viewport if canvas changed
-        if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
-            resize();
-        }
-
         // 5 simulation steps per display frame (180Hz sim at 60Hz display)
         for (let i = 0; i < 5; i++) {
             system.advance();
         }
 
-        // Display
         system.renderDisplay();
-
         requestAnimationFrame(frame);
     }
 
