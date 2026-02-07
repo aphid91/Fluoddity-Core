@@ -52,6 +52,14 @@ void main() {
         return;
     }
     vec4 brush_color = texture(brush_texture, uv);
-    vec4 canvas_color = getBlur(uv, canvas_texture, config.trail_diffusion);
+    vec4 canvas_color;
+    float TRAIL_DIFFUSION = config.trail_diffusion;
+    if (TRAIL_DIFFUSION > 0.0) {
+        TRAIL_DIFFUSION = TRAIL_DIFFUSION * TRAIL_DIFFUSION; // better scaling for slider
+        TRAIL_DIFFUSION = 4.0 / (pow(5.0, TRAIL_DIFFUSION) - 1.0); // better scaling for slider
+        canvas_color = getBlur(uv, canvas_texture, TRAIL_DIFFUSION);
+    } else {
+        canvas_color = texture(canvas_texture, uv);
+    }
     canvas_out = canvas_color * config.trail_persistence + (1.0 - config.trail_persistence) * vec4(brush_color.xy, 0.0, 1.0);
 }

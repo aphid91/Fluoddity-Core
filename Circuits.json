@@ -4,7 +4,7 @@
     "axial_force": 0.04100000113248825,
     "lateral_force": -0.7070000171661377,
     "sensor_gain": 1.3925049304962158,
-    "mutation_scale": 0.0,
+    "mutation_scale": 0.7675260305404663,
     "drag": 0.3330000042915344,
     "strafe_power": 0.0,
     "sensor_angle": 0.16200000047683716,

@@ -112,6 +112,8 @@ export class ParticleSystem {
         // Canvas textures (ping-pong)
         for (let i = 0; i < 2; i++) {
             this.canvasTextures[i] = createFloatTexture(gl, c.canvasWidth, c.canvasHeight);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             this.canvasFBOs[i] = createFramebuffer(gl, this.canvasTextures[i]);
         }
         this.canvasPing = 0;

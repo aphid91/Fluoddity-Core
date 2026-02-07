@@ -11,7 +11,7 @@ SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Circuits.json'):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Angles.json'):
         
         self.ctx = ctx
         self.canvas_size = canvas_size
@@ -28,6 +28,9 @@ class ParticleSystem:
         self.brush_fbo = self.ctx.framebuffer(color_attachments=[self.brush_texture])
 
         self.canvas_texture = self.ctx.texture(canvas_size, 4, dtype='f4')
+        self.canvas_texture.repeat_x = True
+        self.canvas_texture.repeat_y = True
+        self.canvas_texture.filter = (moderngl.LINEAR,moderngl.LINEAR)
         self.canvas_fbo = self.ctx.framebuffer(color_attachments=[self.canvas_texture])
 
         # Double buffer for canvas update (read from one, write to other)
