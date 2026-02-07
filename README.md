@@ -23,4 +23,5 @@ physics steps work like this:
 ### Canvas Update
 - The canvas update is a simple frag shader. Each frame, the trails diffuse and fade away, while we mix in the newly laid trails from brush.
 - diffusion is handled by a simple 4 neighbor weighted average of the canvas
-- trail fade is performed by mixing old trails (pre diffused) and new trails (from brush). Thus the equilibrium trail intensity is independent of the trail-persistence value
+- trail fade is performed by mixing old trails (pre diffused) and new trails (from brush) with canvas_out = trail_persistence*canvas_in + (1-trail_persistence)*brush_in.
+- This mix() style trail persistence ensures that the equilibrium trail intensity is independent of the specific trail-persistence value
