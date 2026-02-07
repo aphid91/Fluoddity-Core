@@ -4,6 +4,7 @@ https://github.com/aphid91/Fluoddity
 Fluoddity-Core contains just enough machinery to load and run a Fluoddity config (no jitter or parameter sweeps). 
 For more information see the Readme for Fluoddity
 
+claude coded webgl port demo: https://aphid91.github.io/Fluoddity-Core/
 ## Structure
 System state consists of a particle buffer called "entities" and a texture that stores particle trails called "canvas". 
 physics steps work like this:
