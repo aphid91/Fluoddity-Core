@@ -28,6 +28,21 @@
         }
         #preset-selector:hover { border-color: #999; }
         #preset-selector option { background: #222; color: #ccc; }
+        #reset-button {
+            position: fixed;
+            top: 12px;
+            right: 220px;
+            z-index: 10;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #reset-button:hover { border-color: #999; }
         #error-display {
             position: fixed;
             bottom: 12px;
@@ -43,10 +58,8 @@
     </style>
 </head>
 <body>
-    <select id="preset-selector">
-        <option value="HungryHungryHippos">Hungry Hungry Hippos</option>
-        <option value="Searching">Searching</option>
-    </select>
+    <button id="reset-button">Reset</button>
+    <select id="preset-selector"></select>
     <canvas id="canvas"></canvas>
     <div id="error-display"></div>
     <script type="module" src="main.js"></script>

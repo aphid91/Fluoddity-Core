@@ -13,7 +13,7 @@ import {
     tryset, setConfigUniforms, setRuleUniforms, fetchShader
 } from './gl_utils.js';
 
-const WORLD_SIZE = 0.25 / 3.0;
+const WORLD_SIZE = 0.25 ;
 const SQRT_WORLD_SIZE = Math.sqrt(WORLD_SIZE);
 const ENTITY_COUNT = Math.floor(600000 * WORLD_SIZE);
 const CANVAS_DIM = Math.floor(1024 * SQRT_WORLD_SIZE);
@@ -25,10 +25,16 @@ const ENTITY_TEX_HEIGHT = Math.ceil(ENTITY_COUNT / ENTITY_TEX_WIDTH);
 export { ENTITY_COUNT, CANVAS_DIM, ENTITY_TEX_WIDTH, ENTITY_TEX_HEIGHT, SQRT_WORLD_SIZE };
 
 export class ParticleSystem {
-    constructor(gl, config) {
+    constructor(gl, config, aspectRatio) {
         this.gl = gl;
         this.config = config;
         this.frameCount = 0;
+
+        // Canvas dimensions adjusted for viewport aspect ratio
+        // sqrt(aspect) factor preserves total pixel area
+        const sqrtAspect = Math.sqrt(aspectRatio);
+        this.canvasWidth = Math.floor(CANVAS_DIM * sqrtAspect);
+        this.canvasHeight = Math.floor(CANVAS_DIM / sqrtAspect);
 
         // Programs (set in init())
         this.entityUpdateProgram = null;
@@ -99,12 +105,12 @@ export class ParticleSystem {
         }
 
         // Brush texture
-        this.brushTexture = createFloatTexture(gl, CANVAS_DIM, CANVAS_DIM);
+        this.brushTexture = createFloatTexture(gl, this.canvasWidth, this.canvasHeight);
         this.brushFBO = createFramebuffer(gl, this.brushTexture);
 
         // Canvas textures (ping-pong)
         for (let i = 0; i < 2; i++) {
-            this.canvasTextures[i] = createFloatTexture(gl, CANVAS_DIM, CANVAS_DIM);
+            this.canvasTextures[i] = createFloatTexture(gl, this.canvasWidth, this.canvasHeight);
             this.canvasFBOs[i] = createFramebuffer(gl, this.canvasTextures[i]);
         }
     }
@@ -238,7 +244,7 @@ export class ParticleSystem {
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.brushFBO);
-        gl.viewport(0, 0, CANVAS_DIM, CANVAS_DIM);
+        gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
 
         // Clear brush texture
         gl.clearColor(0, 0, 0, 0);
@@ -254,7 +260,7 @@ export class ParticleSystem {
         tryset(gl, prog, 'entity_texture', 0);
 
         // Set uniforms
-        tryset(gl, prog, 'canvas_resolution', [CANVAS_DIM, CANVAS_DIM]);
+        tryset(gl, prog, 'canvas_resolution', [this.canvasWidth, this.canvasHeight]);
         tryset(gl, prog, 'frame_count', this.frameCount);
         tryset(gl, prog, 'entity_tex_width', ENTITY_TEX_WIDTH);
 
@@ -273,7 +279,7 @@ export class ParticleSystem {
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.canvasFBOs[writeIdx]);
-        gl.viewport(0, 0, CANVAS_DIM, CANVAS_DIM);
+        gl.viewport(0, 0, this.canvasWidth, this.canvasHeight);
 
         // Bind brush texture to unit 0
         gl.activeTexture(gl.TEXTURE0);
@@ -322,6 +328,5 @@ export class ParticleSystem {
 
     setConfig(config) {
         this.config = config;
-        this.reset();
     }
 }

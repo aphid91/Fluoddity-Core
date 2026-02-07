@@ -27,4 +27,3 @@ build/
 # Application specific
 *.log
 preferences.config
-physics_configs/

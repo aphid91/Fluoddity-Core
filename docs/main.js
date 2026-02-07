@@ -6,11 +6,6 @@
 import { loadConfig } from './gl_utils.js';
 import { ParticleSystem } from './particle_system.js';
 
-const PRESETS = {
-    'HungryHungryHippos': 'configs/HungryHungryHippos.json',
-    'Searching': 'configs/Searching.json',
-};
-
 async function main() {
     const canvas = document.getElementById('canvas');
     const errorDisplay = document.getElementById('error-display');
@@ -37,8 +32,28 @@ async function main() {
         return;
     }
 
-    // Load default config
+    // Load preset manifest and populate dropdown
     const presetSelector = document.getElementById('preset-selector');
+    let presetNames;
+    try {
+        const manifestResponse = await fetch('physics_configs/index.json');
+        if (!manifestResponse.ok) throw new Error(`HTTP ${manifestResponse.status}`);
+        presetNames = await manifestResponse.json();
+    } catch (e) {
+        showError(`Failed to load preset manifest: ${e.message}`);
+        return;
+    }
+
+    // Populate dropdown from manifest
+    presetSelector.innerHTML = '';
+    for (const name of presetNames) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name.replace(/([A-Z])/g, ' $1').trim();
+        presetSelector.appendChild(option);
+    }
+
+    // Load default config
     let config;
     try {
         config = await loadPreset(presetSelector.value);
@@ -47,8 +62,9 @@ async function main() {
         return;
     }
 
-    // Create and initialize particle system
-    const system = new ParticleSystem(gl, config);
+    // Create and initialize particle system with viewport aspect ratio
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const system = new ParticleSystem(gl, config, aspectRatio);
     try {
         await system.init();
     } catch (e) {
@@ -57,7 +73,7 @@ async function main() {
         return;
     }
 
-    // Preset selector handler
+    // Preset selector handler — changes config without resetting particles
     presetSelector.addEventListener('change', async () => {
         try {
             const newConfig = await loadPreset(presetSelector.value);
@@ -65,6 +81,12 @@ async function main() {
         } catch (e) {
             showError(`Failed to load preset: ${e.message}`);
         }
+    });
+
+    // Reset button handler
+    const resetButton = document.getElementById('reset-button');
+    resetButton.addEventListener('click', () => {
+        system.reset();
     });
 
     // Render loop
@@ -95,8 +117,7 @@ async function main() {
 }
 
 async function loadPreset(name) {
-    const path = PRESETS[name];
-    if (!path) throw new Error(`Unknown preset: ${name}`);
+    const path = `physics_configs/${name}.json`;
     const response = await fetch(path);
     if (!response.ok) throw new Error(`HTTP ${response.status} loading ${path}`);
     const data = await response.json();
