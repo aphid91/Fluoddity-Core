@@ -4,8 +4,9 @@ https://github.com/aphid91/Fluoddity
 Fluoddity-Core contains just enough machinery to load and run a config (no jitter or parameter sweeps). It is meant as a companion to the full Fluoddity repo for those who want to tinker and/or understand the algorithm without digging through vibe-coded bells and whistles.
 For more information see the Readme for Fluoddity
 
-claude coded webgl port demo: https://aphid91.github.io/Fluoddity-Core/
-## Structure
+It also hosts this claude coded webgl port of the core engine: https://aphid91.github.io/Fluoddity-Core/ This demo can be found in the docs/ folder ("docs" folder is for github pages integration)
+
+## Algorithm Structure
 System state consists of a particle buffer called "entities" and a texture that stores particle trails called "canvas". 
 physics steps work like this:
 
@@ -16,7 +17,7 @@ physics steps work like this:
 - calculate_entity_behavior outputs a vec2 force and vec2 strafe.
 - we update particle state with: velocity =velocity*drag + force; and position += velocity + strafe;
 ### Brush Update
-- In order to write new trails to the canvas, we must splat all the particles to their locations on the canvas.
+- In order to write new trails to the canvas, we must splat all the particles to their locations.
 - A "brush" texture with the same dimensions as canvas acts as a staging area for these newly created trails.
 - We use instanced rendering with one instance per entity and additive blending.
 - Each particle draws a small gaussian kernel with color == (velocity_x, velocity_y, 0.01, 1) * kernel. (only the velocity terms are used currently, the 0.01 is mostly placeholder)
