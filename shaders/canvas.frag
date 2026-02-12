@@ -44,10 +44,11 @@ vec4 getBlur(vec2 pos, sampler2D sam,float diffusion_constant) {
     return (getCan(pos, sam) * K + nc + sc + wc + ec) / (4. + K);
 }
 void main() {
-    if(frame_count<2){canvas_out=vec4(0,0,0,1);return;}
+    if(frame_count==0){canvas_out=vec4(0,0,0,1);return;}
     vec4 brush_color = texture(brush_texture, uv);
     vec4 canvas_color;
-    float TRAIL_DIFFUSION = config.trail_diffusion;
+    float TRAIL_DIFFUSION = clamp(config.trail_diffusion,0.001,1.0);
+    float TRAIL_PERSISTENCE = clamp(config.trail_persistence,0.,0.999);
     if(TRAIL_DIFFUSION>0){
         TRAIL_DIFFUSION= TRAIL_DIFFUSION*TRAIL_DIFFUSION;//better scaling for slider
         TRAIL_DIFFUSION = 4./(pow(5,(TRAIL_DIFFUSION))-1);//better scaling for slider
@@ -56,5 +57,5 @@ void main() {
     else{
         canvas_color = texture(canvas_texture,uv);
     }
-    canvas_out = canvas_color * config.trail_persistence + (1.0 - config.trail_persistence) * vec4(brush_color.xy,0,1);
+    canvas_out = canvas_color * TRAIL_PERSISTENCE + (1 - TRAIL_PERSISTENCE) * vec4(brush_color.xy,0,1);
 }

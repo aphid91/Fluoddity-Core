@@ -11,7 +11,7 @@ SIZE_OF_ENTITY_STRUCT = 24
 
 
 class ParticleSystem:
-    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='Angles.json'):
+    def __init__(self, ctx, canvas_size=(CANVAS_DIM,CANVAS_DIM), config_path='9LeafClovers.json'):
         
         self.ctx = ctx
         self.canvas_size = canvas_size
@@ -25,7 +25,11 @@ class ParticleSystem:
 
         # Textures and framebuffers
         self.brush_texture = self.ctx.texture(canvas_size, 4, dtype='f4')
+        self.brush_texture.repeat_x = True
+        self.brush_texture.repeat_y = True
+        self.brush_texture.filter = (moderngl.LINEAR,moderngl.LINEAR)
         self.brush_fbo = self.ctx.framebuffer(color_attachments=[self.brush_texture])
+        
 
         self.canvas_texture = self.ctx.texture(canvas_size, 4, dtype='f4')
         self.canvas_texture.repeat_x = True
@@ -35,6 +39,9 @@ class ParticleSystem:
 
         # Double buffer for canvas update (read from one, write to other)
         self.canvas_texture_back = self.ctx.texture(canvas_size, 4, dtype='f4')
+        self.canvas_texture.repeat_x = True
+        self.canvas_texture.repeat_y = True
+        self.canvas_texture.filter = (moderngl.LINEAR,moderngl.LINEAR)
         self.canvas_fbo_back = self.ctx.framebuffer(color_attachments=[self.canvas_texture_back])
 
         # Entity buffer
@@ -49,7 +56,6 @@ class ParticleSystem:
 
         # Initialize gpu resources
         self.reload()
-
 
 
     def reload(self):
@@ -78,6 +84,7 @@ class ParticleSystem:
                 fragment_shader=frag_source
             )
             self.brush_splat_program = new_program
+            self.brush_vao = self.ctx.vertex_array(self.brush_splat_program, [])
             print("Brush splat shaders reloaded successfully")
         except Exception as e:
             print(f"Failed to reload brush splat shaders: {e}")
@@ -176,9 +183,7 @@ class ParticleSystem:
         tryset(self.brush_splat_program, 'frame_count', self.frame_count)
 
         # Instanced rendering: 4 vertices per entity with ENTITY_COUNT instances
-        # No VAO needed - brush.vert generates vertices from gl_VertexID and gl_InstanceID
-        vao = self.ctx.vertex_array(self.brush_splat_program, [])
-        vao.render(moderngl.TRIANGLE_FAN, vertices=4, instances=ENTITY_COUNT)
+        self.brush_vao.render(moderngl.TRIANGLE_FAN, vertices=4, instances=ENTITY_COUNT)
 
         # Restore default blend mode
         self.ctx.disable(moderngl.BLEND)
