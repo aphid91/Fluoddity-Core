@@ -5,21 +5,43 @@
 
 // ─── Coordinate conversion ──────────────────────────────────────────────────
 
-export function screenToWorld(canvas, clientX, clientY, camera = null) {
+export function screenToWorld(canvas, clientX, clientY, camera = null, constants = null) {
     const rect = canvas.getBoundingClientRect();
-    const x = (clientX - rect.left) / rect.width * 2.0 - 1.0;
-    const y = -((clientY - rect.top) / rect.height * 2.0 - 1.0);
-    if (camera) {
-        return {
-            x: x * camera.zoom + camera.posX,
-            y: y * camera.zoom + camera.posY,
-        };
+    const ndcX = (clientX - rect.left) / rect.width * 2.0 - 1.0;
+    const ndcY = -((clientY - rect.top) / rect.height * 2.0 - 1.0);
+    if (camera && constants) {
+        // Invert the cam_brush.vert transform:
+        //   ndc = vertex_pos * vec2(1, tex_aspect) * scale - cam_pos * vec2(1,-1) / cam_zoom
+        // where scale = base_scale / cam_zoom
+        // So: ndc * cam_zoom = vertex_pos * vec2(1, tex_aspect) * base_scale - cam_pos * vec2(1,-1)
+        // Solving for vertex_pos (entity world position):
+        const texAspect = constants.canvasWidth / constants.canvasHeight;
+        const winAspect = canvas.width / canvas.height;
+        let bsx, bsy;
+        if (texAspect > winAspect) {
+            bsx = 1.0;
+            bsy = winAspect / texAspect;
+        } else {
+            bsx = texAspect / winAspect;
+            bsy = 1.0;
+        }
+        const worldX = (ndcX * camera.zoom + camera.posX) / bsx;
+        const worldY = (ndcY * camera.zoom - camera.posY) / (texAspect * bsy);
+        return { x: worldX, y: worldY };
     }
-    return { x, y };
+    return { x: ndcX, y: ndcY };
 }
 
-export function screenToUV(canvas, clientX, clientY) {
+export function screenToUV(canvas, clientX, clientY, camera = null, constants = null) {
     const rect = canvas.getBoundingClientRect();
+    if (camera && constants) {
+        // Convert screen position through camera to canvas UV
+        const world = screenToWorld(canvas, clientX, clientY, camera, constants);
+        // Entity world space [-1,1] → canvas UV [0,1]
+        const u = (world.x + 1.0) * 0.5;
+        const v = (world.y + 1.0) * 0.5;
+        return { x: u, y: v };
+    }
     const u = (clientX - rect.left) / rect.width;
     const v = 1.0 - (clientY - rect.top) / rect.height;
     return { x: u, y: v };
@@ -87,16 +109,22 @@ export function setupKeyboard(state, actions) {
  * @param {HTMLCanvasElement} canvas
  * @param {object} state - shared AppState
  * @param {object} actions - callbacks:
- *   { selectParticleAt, performUndo, setTrailDrawState }
+ *   { selectParticleAt, performUndo, setTrailDrawState, getConstants }
  */
 export function setupMouse(canvas, state, actions) {
+    function getCameraUV(clientX, clientY) {
+        const cam = state.fancyCamera ? state.camera : null;
+        const c = cam ? actions.getConstants() : null;
+        return screenToUV(canvas, clientX, clientY, cam, c);
+    }
+
     canvas.addEventListener('mousedown', (e) => {
         if (e.button === 0) {
             if (state.mouseMode === 'select') {
                 actions.selectParticleAt(e.clientX, e.clientY);
             } else if (state.mouseMode === 'draw') {
                 state.mouseDown = true;
-                const uv = screenToUV(canvas, e.clientX, e.clientY);
+                const uv = getCameraUV(e.clientX, e.clientY);
                 state.mousePos = uv;
                 state.prevMousePos = { ...uv };
             }
@@ -106,7 +134,7 @@ export function setupMouse(canvas, state, actions) {
     canvas.addEventListener('mousemove', (e) => {
         if (state.mouseMode === 'draw' && state.mouseDown) {
             state.prevMousePos = { ...state.mousePos };
-            state.mousePos = screenToUV(canvas, e.clientX, e.clientY);
+            state.mousePos = getCameraUV(e.clientX, e.clientY);
         }
     });
 
@@ -137,18 +165,18 @@ export function setupScroll(canvas, state) {
         const mouseNDC_x = (e.clientX - rect.left) / rect.width * 2.0 - 1.0;
         const mouseNDC_y = -((e.clientY - rect.top) / rect.height * 2.0 - 1.0);
 
-        // World position under mouse with current camera
+        // Shader: ndc.x * zoom = world.x * base_sx - posX
+        //         ndc.y * zoom = world.y * base_sy + posY
+        // For zoom-to-cursor (keep ndc fixed while zoom changes):
+        //   posX_new = posX_old - ndc.x * (zoom_new - zoom_old)
+        //   posY_new = posY_old + ndc.y * (zoom_new - zoom_old)
         const cam = state.camera;
-        const worldX = mouseNDC_x * cam.zoom + cam.posX;
-        const worldY = mouseNDC_y * cam.zoom + cam.posY;
-
-        // Apply zoom
         const zoomFactor = e.deltaY > 0 ? 1.1 : 1.0 / 1.1;
         const newZoom = cam.zoom * zoomFactor;
+        const dZoom = newZoom - cam.zoom;
 
-        // Adjust camera so world point stays under mouse
-        cam.posX = worldX - mouseNDC_x * newZoom;
-        cam.posY = worldY - mouseNDC_y * newZoom;
+        cam.posX -= mouseNDC_x * dZoom;
+        cam.posY += mouseNDC_y * dZoom;
         cam.zoom = Math.max(0.01, Math.min(100.0, newZoom));
     }, { passive: false });
 }
@@ -160,11 +188,13 @@ export function updateCamera(state, dt) {
     const keys = state.cameraKeys;
     const cam = state.camera;
 
+    // Shader uses: ndc -= cam_pos * vec2(1, -1) / cam_zoom
+    // So increasing posX shifts view right, decreasing posY shifts view up
     const panSpeed = 1.5 * cam.zoom * dt;
     if (keys.a) cam.posX -= panSpeed;
     if (keys.d) cam.posX += panSpeed;
-    if (keys.w) cam.posY += panSpeed;
-    if (keys.s) cam.posY -= panSpeed;
+    if (keys.w) cam.posY -= panSpeed;
+    if (keys.s) cam.posY += panSpeed;
 
     const zoomSpeed = 1.5 * dt;
     if (keys.q) cam.zoom *= (1.0 + zoomSpeed);

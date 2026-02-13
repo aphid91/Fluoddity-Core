@@ -118,7 +118,7 @@ async function main() {
 
     function selectParticleAt(clientX, clientY) {
         const cam = state.fancyCamera ? state.camera : null;
-        const world = screenToWorld(canvas, clientX, clientY, cam);
+        const world = screenToWorld(canvas, clientX, clientY, cam, cam ? system.c : null);
         const data = system.readEntityData();
         const c = system.c;
 
@@ -191,6 +191,7 @@ async function main() {
         selectParticleAt,
         performUndo,
         setTrailDrawState: (s) => system.setTrailDrawState(s),
+        getConstants: () => system.c,
     });
 
     setupScroll(canvas, state);

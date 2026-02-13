@@ -60,6 +60,27 @@ export class ParticleSystem {
         this.brushVAO = null;
         this.cameraVAO = null;
         this.camBrushVAO = null;
+
+        // Bloom/tonemap resources (lazy init on first fancy camera render)
+        this._bloomInitialized = false;
+        this._bloomInitializing = false;
+        this._bloomWidth = 0;
+        this._bloomHeight = 0;
+        this._fullscreenQuadVertSrc = null;
+
+        this.bloomDownsampleProgram = null;
+        this.bloomUpsampleProgram = null;
+        this.tonemapProgram = null;
+
+        this.camBrushTexture = null;
+        this.camBrushFBO = null;
+        this.bloomCopyTexture = null;
+        this.bloomCopyFBO = null;
+        this.bloomMipTextures = [];
+        this.bloomMipFBOs = [];
+        this.bloomDownsampleVAO = null;
+        this.bloomUpsampleVAO = null;
+        this.tonemapVAO = null;
     }
 
     async init() {
@@ -86,6 +107,9 @@ export class ParticleSystem {
             fetchShader('shaders/cam_brush.frag'),
         ]);
 
+        // Cache vertex shader source for lazy bloom init
+        this._fullscreenQuadVertSrc = fullscreenQuadVert;
+
         // Compile programs
         this.entityUpdateProgram = createProgram(gl, fullscreenQuadVert, entityUpdateFrag);
         this.brushProgram = createProgram(gl, brushVert, brushFrag);
@@ -102,6 +126,13 @@ export class ParticleSystem {
         this._destroyGPUResources();
         this._createGPUResources();
         this.frameCount = 0;
+
+        // Recreate bloom FBOs at new canvas size if bloom was initialized
+        if (this._bloomInitialized) {
+            const gl = this.gl;
+            this._createBloomFBOs(gl.canvas.width, gl.canvas.height);
+            this._createBloomVAOs();
+        }
     }
 
     _createGPUResources() {
@@ -151,6 +182,12 @@ export class ParticleSystem {
         if (this.cameraVAO) gl.deleteVertexArray(this.cameraVAO);
         if (this.brushVAO) gl.deleteVertexArray(this.brushVAO);
         if (this.camBrushVAO) gl.deleteVertexArray(this.camBrushVAO);
+
+        // Bloom FBOs/VAOs are size-dependent; programs are kept
+        if (this._bloomInitialized) {
+            this._destroyBloomFBOs();
+            this._destroyBloomVAOs();
+        }
     }
 
     _createFullscreenQuadVAOs() {
@@ -218,6 +255,108 @@ export class ParticleSystem {
         const gl = this.gl;
         // Empty VAO - cam_brush.vert uses gl_VertexID to index local arrays
         this.camBrushVAO = gl.createVertexArray();
+    }
+
+    // ─── Bloom/tonemap lazy initialization ────────────────────────────────────
+
+    async _initBloomResources() {
+        const gl = this.gl;
+
+        // Fetch and compile bloom/tonemap shaders
+        const [downsampleFrag, upsampleFrag, tonemapFrag] = await Promise.all([
+            fetchShader('shaders/bloom_downsample.frag'),
+            fetchShader('shaders/bloom_upsample.frag'),
+            fetchShader('shaders/tonemap.frag'),
+        ]);
+
+        this.bloomDownsampleProgram = createProgram(gl, this._fullscreenQuadVertSrc, downsampleFrag);
+        this.bloomUpsampleProgram = createProgram(gl, this._fullscreenQuadVertSrc, upsampleFrag);
+        this.tonemapProgram = createProgram(gl, this._fullscreenQuadVertSrc, tonemapFrag);
+
+        // Create FBOs at current screen size
+        this._createBloomFBOs(gl.canvas.width, gl.canvas.height);
+
+        // Create VAOs for postprocess passes
+        this._createBloomVAOs();
+
+        this._bloomInitialized = true;
+    }
+
+    _createBloomFBOs(w, h) {
+        const gl = this.gl;
+        const MIP_LEVELS = 5;
+
+        // Intermediate cam_brush output (RGBA32F, LINEAR for bloom sampling)
+        this.camBrushTexture = createFloatTexture(gl, w, h);
+        gl.bindTexture(gl.TEXTURE_2D, this.camBrushTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        this.camBrushFBO = createFramebuffer(gl, this.camBrushTexture);
+
+        // Bloom copy texture (holds original + bloom after upsample chain)
+        this.bloomCopyTexture = createFloatTexture(gl, w, h);
+        gl.bindTexture(gl.TEXTURE_2D, this.bloomCopyTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        this.bloomCopyFBO = createFramebuffer(gl, this.bloomCopyTexture);
+
+        // Mip chain (5 levels, each half the previous)
+        this.bloomMipTextures = [];
+        this.bloomMipFBOs = [];
+        let mw = w, mh = h;
+        for (let i = 0; i < MIP_LEVELS; i++) {
+            mw = Math.max(1, mw >> 1);
+            mh = Math.max(1, mh >> 1);
+            const tex = createFloatTexture(gl, mw, mh);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+            this.bloomMipTextures.push(tex);
+            this.bloomMipFBOs.push(createFramebuffer(gl, tex));
+        }
+
+        this._bloomWidth = w;
+        this._bloomHeight = h;
+    }
+
+    _createBloomVAOs() {
+        const vertices = new Float32Array([
+            -1, -1,  1, -1,  1,  1,
+            -1, -1,  1,  1, -1,  1,
+        ]);
+        this.bloomDownsampleVAO = this._makeQuadVAO(this.bloomDownsampleProgram, vertices);
+        this.bloomUpsampleVAO = this._makeQuadVAO(this.bloomUpsampleProgram, vertices);
+        this.tonemapVAO = this._makeQuadVAO(this.tonemapProgram, vertices);
+    }
+
+    _destroyBloomFBOs() {
+        const gl = this.gl;
+        if (this.camBrushTexture) { gl.deleteTexture(this.camBrushTexture); this.camBrushTexture = null; }
+        if (this.camBrushFBO) { gl.deleteFramebuffer(this.camBrushFBO); this.camBrushFBO = null; }
+        if (this.bloomCopyTexture) { gl.deleteTexture(this.bloomCopyTexture); this.bloomCopyTexture = null; }
+        if (this.bloomCopyFBO) { gl.deleteFramebuffer(this.bloomCopyFBO); this.bloomCopyFBO = null; }
+        for (const tex of this.bloomMipTextures) gl.deleteTexture(tex);
+        for (const fbo of this.bloomMipFBOs) gl.deleteFramebuffer(fbo);
+        this.bloomMipTextures = [];
+        this.bloomMipFBOs = [];
+        this._bloomWidth = 0;
+        this._bloomHeight = 0;
+    }
+
+    _destroyBloomVAOs() {
+        const gl = this.gl;
+        if (this.bloomDownsampleVAO) { gl.deleteVertexArray(this.bloomDownsampleVAO); this.bloomDownsampleVAO = null; }
+        if (this.bloomUpsampleVAO) { gl.deleteVertexArray(this.bloomUpsampleVAO); this.bloomUpsampleVAO = null; }
+        if (this.tonemapVAO) { gl.deleteVertexArray(this.tonemapVAO); this.tonemapVAO = null; }
     }
 
     advance() {
@@ -325,7 +464,35 @@ export class ParticleSystem {
 
     renderDisplay(fancyCamera, camera) {
         if (fancyCamera && camera) {
-            this.renderCamBrush(camera);
+            if (!this._bloomInitialized) {
+                if (!this._bloomInitializing) {
+                    this._bloomInitializing = true;
+                    this._initBloomResources().then(() => {
+                        this._bloomInitializing = false;
+                    });
+                }
+                // Render directly to screen while bloom resources are loading
+                this.renderCamBrush(camera, null);
+                return;
+            }
+
+            // Recreate bloom FBOs if canvas size changed
+            const gl = this.gl;
+            if (gl.canvas.width !== this._bloomWidth || gl.canvas.height !== this._bloomHeight) {
+                this._destroyBloomFBOs();
+                this._destroyBloomVAOs();
+                this._createBloomFBOs(gl.canvas.width, gl.canvas.height);
+                this._createBloomVAOs();
+            }
+
+            // Step 1: Render cam_brush to intermediate RGBA32F FBO
+            this.renderCamBrush(camera, this.camBrushFBO);
+
+            // Step 2: Bloom (downsample + blit + upsample)
+            this._bloomPass();
+
+            // Step 3: Tonemap to screen
+            this._tonemapPass();
         } else {
             const gl = this.gl;
             const prog = this.cameraProgram;
@@ -345,13 +512,13 @@ export class ParticleSystem {
         }
     }
 
-    renderCamBrush(camera) {
+    renderCamBrush(camera, targetFBO) {
         const gl = this.gl;
         const prog = this.camBrushProgram;
         const c = this.c;
 
         gl.useProgram(prog);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, targetFBO);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
@@ -379,6 +546,98 @@ export class ParticleSystem {
         gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, c.entityCount);
 
         gl.disable(gl.BLEND);
+    }
+
+    // ─── Postprocess passes ──────────────────────────────────────────────────
+
+    _bloomPass() {
+        const gl = this.gl;
+        const MIP_LEVELS = 5;
+        const w = this._bloomWidth;
+        const h = this._bloomHeight;
+
+        // --- Downsample chain: camBrushTexture → mip[0] → ... → mip[4] ---
+        const dsProg = this.bloomDownsampleProgram;
+        gl.useProgram(dsProg);
+        gl.bindVertexArray(this.bloomDownsampleVAO);
+
+        for (let i = 0; i < MIP_LEVELS; i++) {
+            const srcTex = (i === 0) ? this.camBrushTexture : this.bloomMipTextures[i - 1];
+            const sw = (i === 0) ? w : Math.max(1, w >> i);
+            const sh = (i === 0) ? h : Math.max(1, h >> i);
+            const dstW = Math.max(1, w >> (i + 1));
+            const dstH = Math.max(1, h >> (i + 1));
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.bloomMipFBOs[i]);
+            gl.viewport(0, 0, dstW, dstH);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, srcTex);
+            tryset(gl, dsProg, 'source_tex', 0);
+            tryset(gl, dsProg, 'source_texel_size', [1.0 / sw, 1.0 / sh]);
+            tryset(gl, dsProg, 'is_first_pass', (i === 0) ? 1 : 0);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+
+        // --- Blit original HDR into bloomCopyTexture for compositing ---
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.camBrushFBO);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.bloomCopyFBO);
+        gl.blitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+
+        // --- Upsample chain with additive blending: mip[4] → ... → mip[0] → bloomCopyFBO ---
+        const usProg = this.bloomUpsampleProgram;
+        gl.useProgram(usProg);
+        gl.bindVertexArray(this.bloomUpsampleVAO);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE);
+
+        for (let i = MIP_LEVELS - 1; i >= 0; i--) {
+            const srcTex = this.bloomMipTextures[i];
+            const srcW = Math.max(1, w >> (i + 1));
+            const srcH = Math.max(1, h >> (i + 1));
+
+            let dstFBO, dstW, dstH;
+            if (i === 0) {
+                // Final upsample: blend bloom onto original in bloomCopyFBO
+                dstFBO = this.bloomCopyFBO;
+                dstW = w;
+                dstH = h;
+            } else {
+                dstFBO = this.bloomMipFBOs[i - 1];
+                dstW = Math.max(1, w >> i);
+                dstH = Math.max(1, h >> i);
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, dstFBO);
+            gl.viewport(0, 0, dstW, dstH);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, srcTex);
+            tryset(gl, usProg, 'source_tex', 0);
+            tryset(gl, usProg, 'source_texel_size', [1.0 / srcW, 1.0 / srcH]);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+
+        gl.disable(gl.BLEND);
+    }
+
+    _tonemapPass() {
+        const gl = this.gl;
+        const prog = this.tonemapProgram;
+
+        gl.useProgram(prog);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.bloomCopyTexture);
+        tryset(gl, prog, 'source_tex', 0);
+
+        gl.bindVertexArray(this.tonemapVAO);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
     reset() {
