@@ -33,6 +33,7 @@ async function main() {
         logger.error('EXT_color_buffer_float extension not available. Float framebuffers are required.');
         return;
     }
+    gl.getExtension('OES_texture_float_linear');
 
     // Load preset manifest
     let presetNames;

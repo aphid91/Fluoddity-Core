@@ -3,7 +3,7 @@ precision highp float;
 // Tone mapping: brightness scaling + asinh soft compression.
 // Applied as final postprocess pass to convert HDR to displayable range.
 
-#define BRIGHTNESS 3.0
+#define BRIGHTNESS 4.5
 #define TONEMAP_SOFTNESS 3.0
 
 uniform sampler2D source_tex;
