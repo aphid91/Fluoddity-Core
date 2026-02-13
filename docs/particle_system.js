@@ -41,6 +41,7 @@ export class ParticleSystem {
         this.brushProgram = null;
         this.canvasUpdateProgram = null;
         this.cameraProgram = null;
+        this.camBrushProgram = null;
 
         // GPU resources (set in _createGPUResources)
         this.entityTextures = [null, null];
@@ -58,6 +59,7 @@ export class ParticleSystem {
         this.canvasQuadVAO = null;
         this.brushVAO = null;
         this.cameraVAO = null;
+        this.camBrushVAO = null;
     }
 
     async init() {
@@ -70,7 +72,9 @@ export class ParticleSystem {
             brushVert,
             brushFrag,
             canvasFrag,
-            cameraFrag
+            cameraFrag,
+            camBrushVert,
+            camBrushFrag
         ] = await Promise.all([
             fetchShader('shaders/fullscreen_quad.vert'),
             fetchShader('shaders/entity_update.frag'),
@@ -78,6 +82,8 @@ export class ParticleSystem {
             fetchShader('shaders/brush.frag'),
             fetchShader('shaders/canvas.frag'),
             fetchShader('shaders/camera.frag'),
+            fetchShader('shaders/cam_brush.vert'),
+            fetchShader('shaders/cam_brush.frag'),
         ]);
 
         // Compile programs
@@ -85,6 +91,7 @@ export class ParticleSystem {
         this.brushProgram = createProgram(gl, brushVert, brushFrag);
         this.canvasUpdateProgram = createProgram(gl, fullscreenQuadVert, canvasFrag);
         this.cameraProgram = createProgram(gl, fullscreenQuadVert, cameraFrag);
+        this.camBrushProgram = createProgram(gl, camBrushVert, camBrushFrag);
 
         // Create GPU resources
         this._createGPUResources();
@@ -124,6 +131,7 @@ export class ParticleSystem {
         // VAOs
         this._createFullscreenQuadVAOs();
         this._createBrushVAO();
+        this._createCamBrushVAO();
     }
 
     _destroyGPUResources() {
@@ -142,6 +150,7 @@ export class ParticleSystem {
         if (this.canvasQuadVAO) gl.deleteVertexArray(this.canvasQuadVAO);
         if (this.cameraVAO) gl.deleteVertexArray(this.cameraVAO);
         if (this.brushVAO) gl.deleteVertexArray(this.brushVAO);
+        if (this.camBrushVAO) gl.deleteVertexArray(this.camBrushVAO);
     }
 
     _createFullscreenQuadVAOs() {
@@ -203,6 +212,12 @@ export class ParticleSystem {
         }
 
         gl.bindVertexArray(null);
+    }
+
+    _createCamBrushVAO() {
+        const gl = this.gl;
+        // Empty VAO - cam_brush.vert uses gl_VertexID to index local arrays
+        this.camBrushVAO = gl.createVertexArray();
     }
 
     advance() {
@@ -308,22 +323,62 @@ export class ParticleSystem {
         this.canvasPing = writeIdx;
     }
 
-    renderDisplay() {
+    renderDisplay(fancyCamera, camera) {
+        if (fancyCamera && camera) {
+            this.renderCamBrush(camera);
+        } else {
+            const gl = this.gl;
+            const prog = this.cameraProgram;
+
+            gl.useProgram(prog);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.brushTexture);
+            tryset(gl, prog, 'tex', 0);
+
+            gl.bindVertexArray(this.cameraVAO);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    }
+
+    renderCamBrush(camera) {
         const gl = this.gl;
-        const prog = this.cameraProgram;
+        const prog = this.camBrushProgram;
+        const c = this.c;
 
         gl.useProgram(prog);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0, 0, 0, 1);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
+        // Bind entity texture
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.brushTexture);
-        tryset(gl, prog, 'tex', 0);
+        gl.bindTexture(gl.TEXTURE_2D, this.entityTextures[this.entityPing]);
+        tryset(gl, prog, 'entity_texture', 0);
 
-        gl.bindVertexArray(this.cameraVAO);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        // Set uniforms
+        tryset(gl, prog, 'entity_tex_width', c.entityTexWidth);
+        tryset(gl, prog, 'entity_count', c.entityCount);
+        tryset(gl, prog, 'cohorts', this.config.cohorts);
+        tryset(gl, prog, 'sqrt_world_size', c.sqrtWorldSize, 'float');
+        tryset(gl, prog, 'cam_pos', [camera.posX, camera.posY]);
+        tryset(gl, prog, 'cam_zoom', camera.zoom, 'float');
+        tryset(gl, prog, 'window_size', [gl.canvas.width, gl.canvas.height]);
+        tryset(gl, prog, 'canvas_resolution', [c.canvasWidth, c.canvasHeight]);
+
+        // Additive blending
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+        gl.bindVertexArray(this.camBrushVAO);
+        gl.drawArraysInstanced(gl.TRIANGLE_FAN, 0, 4, c.entityCount);
+
+        gl.disable(gl.BLEND);
     }
 
     reset() {

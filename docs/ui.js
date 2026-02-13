@@ -27,6 +27,7 @@ function getElements() {
         presetDropdown: document.getElementById('preset-dropdown'),
         presetTrigger: document.getElementById('preset-trigger'),
         presetMenu: document.getElementById('preset-menu'),
+        fancyCameraToggle: document.getElementById('fancy-camera-toggle'),
     };
 }
 
@@ -206,6 +207,16 @@ export function setupUI(presetNames, initialPresetName, state, actions) {
     el.worldSizeSelector.addEventListener('change', () => {
         actions.changeWorldSize(parseFloat(el.worldSizeSelector.value));
         el.worldSizeSelector.blur();
+    });
+
+    el.fancyCameraToggle.addEventListener('change', () => {
+        state.fancyCamera = el.fancyCameraToggle.checked;
+        if (state.fancyCamera) {
+            state.camera.posX = 0;
+            state.camera.posY = 0;
+            state.camera.zoom = 1.0;
+        }
+        el.fancyCameraToggle.blur();
     });
 
     const dropdown = setupDropdown(el, presetNames, state, actions);

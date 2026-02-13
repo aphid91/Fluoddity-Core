@@ -7,7 +7,7 @@
 import { ParticleSystem } from './particle_system.js';
 import { computeEntityRule } from './rule_utils.js';
 import { RuleHistory, fetchConfig, createAppState } from './state.js';
-import { setupKeyboard, setupMouse, screenToWorld } from './input.js';
+import { setupKeyboard, setupMouse, setupScroll, screenToWorld, updateCamera } from './input.js';
 import { setupUI, updateModeDisplay } from './ui.js';
 import { createLogger } from './log.js';
 
@@ -117,7 +117,8 @@ async function main() {
     }
 
     function selectParticleAt(clientX, clientY) {
-        const world = screenToWorld(canvas, clientX, clientY);
+        const cam = state.fancyCamera ? state.camera : null;
+        const world = screenToWorld(canvas, clientX, clientY, cam);
         const data = system.readEntityData();
         const c = system.c;
 
@@ -147,6 +148,10 @@ async function main() {
         worldSize = newSize;
         const ar = window.innerWidth / window.innerHeight;
         system.reinitGPU(worldSize, ar);
+        // Reset camera when world size changes
+        state.camera.posX = 0;
+        state.camera.posY = 0;
+        state.camera.zoom = 1.0;
     }
 
     // Dropdown needs a way to register its closeDropdown for keyboard use
@@ -188,6 +193,8 @@ async function main() {
         setTrailDrawState: (s) => system.setTrailDrawState(s),
     });
 
+    setupScroll(canvas, state);
+
     // ─── Resize ───────────────────────────────────────────────────────────────
 
     let resizeTimeout = null;
@@ -202,7 +209,15 @@ async function main() {
 
     // ─── Render loop ──────────────────────────────────────────────────────────
 
+    let lastFrameTime = performance.now();
+
     function frame() {
+        const now = performance.now();
+        const dt = Math.min((now - lastFrameTime) / 1000.0, 0.05);
+        lastFrameTime = now;
+
+        updateCamera(state, dt);
+
         if (!state.paused) {
             const physicsFrequency = parseInt(ui.el.physicsFreqSlider.value, 10);
 
@@ -230,7 +245,7 @@ async function main() {
             }
         }
 
-        system.renderDisplay();
+        system.renderDisplay(state.fancyCamera, state.camera);
         requestAnimationFrame(frame);
     }
 
