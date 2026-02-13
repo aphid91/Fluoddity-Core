@@ -14,7 +14,7 @@ out vec4 fragColor;
 void main() {
     fragColor = texture(source_tex, uv);
 
-    float brightness_constant = 15.0;
+    float brightness_constant = 30.0;
     // Apply brightness multiplier before tone mapping
     fragColor.xyz *= brightness * brightness_constant;
 
