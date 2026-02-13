@@ -205,6 +205,7 @@ export function setupUI(presetNames, initialPresetName, state, actions) {
 
     el.worldSizeSelector.addEventListener('change', () => {
         actions.changeWorldSize(parseFloat(el.worldSizeSelector.value));
+        el.worldSizeSelector.blur();
     });
 
     const dropdown = setupDropdown(el, presetNames, state, actions);
