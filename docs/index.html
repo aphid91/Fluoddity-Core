@@ -163,11 +163,10 @@
             </select>
             <button id="reset-button">Reset</button>
         </div>
-        <div class="control-row">
-            <label style="font-family:monospace;font-size:13px;color:#aaa;cursor:pointer;display:flex;align-items:center;gap:6px;">
-                <input type="checkbox" id="fancy-camera-toggle" style="accent-color:#888;cursor:pointer;">
-                Fancy Camera
-            </label>
+        <div class="slider-row">
+            <label>Brightness</label>
+            <input type="range" id="brightness-slider" min="0.001" max="1.0" value="0.4" step="0.001">
+            <span class="slider-value" id="brightness-value">0.400</span>
         </div>
         <div class="slider-row">
             <label>Speed</label>
@@ -191,6 +190,7 @@
         </div>
     </div>
     <canvas id="canvas"></canvas>
+    <div id="calibration-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;background:#000;display:flex;align-items:center;justify-content:center;font-family:monospace;color:#888;font-size:16px;">Calibrating...</div>
     <div id="error-display"></div>
     <script type="module" src="main.js"></script>
 </body>

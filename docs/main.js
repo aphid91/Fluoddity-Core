@@ -10,6 +10,7 @@ import { RuleHistory, fetchConfig, createAppState } from './state.js';
 import { setupKeyboard, setupMouse, setupScroll, screenToWorld, updateCamera } from './input.js';
 import { setupUI, updateModeDisplay } from './ui.js';
 import { createLogger } from './log.js';
+import { calibrate } from './calibrate.js';
 
 async function main() {
     const canvas = document.getElementById('canvas');
@@ -197,6 +198,20 @@ async function main() {
 
     setupScroll(canvas, state);
 
+    // ─── Auto-detect optimal settings ────────────────────────────────────────
+
+    {
+        const ar = window.innerWidth / window.innerHeight;
+        const optimal = calibrate(gl, system, ar);
+        worldSize = optimal.worldSize;
+
+        // Update UI to reflect calibrated values
+        ui.el.worldSizeSelector.value = String(optimal.worldSize);
+        ui.el.physicsFreqSlider.value = String(optimal.physicsSpeed);
+        ui.el.physicsFreqValue.textContent = String(optimal.physicsSpeed);
+    }
+    document.getElementById('calibration-overlay').style.display = 'none';
+
     // ─── Resize ───────────────────────────────────────────────────────────────
 
     let resizeTimeout = null;
@@ -247,7 +262,8 @@ async function main() {
             }
         }
 
-        system.renderDisplay(state.fancyCamera, state.camera);
+        const brightness = parseFloat(ui.el.brightnessSlider.value);
+        system.renderDisplay(state.fancyCamera, state.camera, brightness);
         requestAnimationFrame(frame);
     }
 

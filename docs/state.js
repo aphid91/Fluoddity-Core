@@ -68,7 +68,7 @@ export function createAppState() {
         previewGeneration: 0,
 
         // Fancy camera state
-        fancyCamera: false,
+        fancyCamera: true,
         camera: { posX: 0, posY: 0, zoom: 1.0 },
         cameraKeys: { w: false, a: false, s: false, d: false, q: false, e: false },
     };

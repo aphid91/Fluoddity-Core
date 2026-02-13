@@ -27,7 +27,8 @@ function getElements() {
         presetDropdown: document.getElementById('preset-dropdown'),
         presetTrigger: document.getElementById('preset-trigger'),
         presetMenu: document.getElementById('preset-menu'),
-        fancyCameraToggle: document.getElementById('fancy-camera-toggle'),
+        brightnessSlider: document.getElementById('brightness-slider'),
+        brightnessValue: document.getElementById('brightness-value'),
     };
 }
 
@@ -48,6 +49,11 @@ function setupSliders(el) {
         el.drawPowerValue.textContent = parseFloat(el.drawPowerSlider.value).toFixed(2);
     });
     el.drawPowerSlider.addEventListener('change', () => el.drawPowerSlider.blur());
+
+    el.brightnessSlider.addEventListener('input', () => {
+        el.brightnessValue.textContent = parseFloat(el.brightnessSlider.value).toFixed(3);
+    });
+    el.brightnessSlider.addEventListener('change', () => el.brightnessSlider.blur());
 }
 
 // ─── Mode toggle ────────────────────────────────────────────────────────────
@@ -207,16 +213,6 @@ export function setupUI(presetNames, initialPresetName, state, actions) {
     el.worldSizeSelector.addEventListener('change', () => {
         actions.changeWorldSize(parseFloat(el.worldSizeSelector.value));
         el.worldSizeSelector.blur();
-    });
-
-    el.fancyCameraToggle.addEventListener('change', () => {
-        state.fancyCamera = el.fancyCameraToggle.checked;
-        if (state.fancyCamera) {
-            state.camera.posX = 0;
-            state.camera.posY = 0;
-            state.camera.zoom = 1.0;
-        }
-        el.fancyCameraToggle.blur();
     });
 
     const dropdown = setupDropdown(el, presetNames, state, actions);

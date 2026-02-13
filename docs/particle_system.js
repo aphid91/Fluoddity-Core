@@ -462,7 +462,7 @@ export class ParticleSystem {
         this.canvasPing = writeIdx;
     }
 
-    renderDisplay(fancyCamera, camera) {
+    renderDisplay(fancyCamera, camera, brightness) {
         if (fancyCamera && camera) {
             if (!this._bloomInitialized) {
                 if (!this._bloomInitializing) {
@@ -492,7 +492,7 @@ export class ParticleSystem {
             this._bloomPass();
 
             // Step 3: Tonemap to screen
-            this._tonemapPass();
+            this._tonemapPass(brightness);
         } else {
             const gl = this.gl;
             const prog = this.cameraProgram;
@@ -624,7 +624,7 @@ export class ParticleSystem {
         gl.disable(gl.BLEND);
     }
 
-    _tonemapPass() {
+    _tonemapPass(brightness) {
         const gl = this.gl;
         const prog = this.tonemapProgram;
 
@@ -635,6 +635,7 @@ export class ParticleSystem {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.bloomCopyTexture);
         tryset(gl, prog, 'source_tex', 0);
+        tryset(gl, prog, 'brightness', brightness, 'float');
 
         gl.bindVertexArray(this.tonemapVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);

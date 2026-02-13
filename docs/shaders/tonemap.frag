@@ -3,10 +3,10 @@ precision highp float;
 // Tone mapping: brightness scaling + asinh soft compression.
 // Applied as final postprocess pass to convert HDR to displayable range.
 
-#define BRIGHTNESS 1.0
 #define TONEMAP_SOFTNESS 3.0
 
 uniform sampler2D source_tex;
+uniform float brightness;
 
 in vec2 uv;
 out vec4 fragColor;
@@ -14,9 +14,9 @@ out vec4 fragColor;
 void main() {
     fragColor = texture(source_tex, uv);
 
-    ;brightness_constant = 15;
+    float brightness_constant = 15.0;
     // Apply brightness multiplier before tone mapping
-    fragColor.xyz *= BRIGHTNESS * brightness_constant;
+    fragColor.xyz *= brightness * brightness_constant;
 
     // Asinh soft-knee compression: preserves hue, compresses intensity
     float len = length(fragColor.xyz);
