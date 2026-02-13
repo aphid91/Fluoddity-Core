@@ -33,6 +33,9 @@ export class ParticleSystem {
         this.frameCount = 0;
         this.c = computeConstants(worldSize, aspectRatio);
 
+        // Trail drawing state
+        this.trailDrawState = { x: 0, y: 0, radius: 0, power: 0 };
+
         // Programs (set in init(), persist across reinitGPU)
         this.entityUpdateProgram = null;
         this.brushProgram = null;
@@ -293,6 +296,12 @@ export class ParticleSystem {
         setConfigUniforms(gl, prog, this.config);
         tryset(gl, prog, 'frame_count', this.frameCount);
 
+        // Trail drawing uniforms
+        const td = this.trailDrawState;
+        tryset(gl, prog, 'trail_draw_pos', [td.x, td.y]);
+        tryset(gl, prog, 'trail_draw_radius', td.radius, 'float');
+        tryset(gl, prog, 'trail_draw_power', td.power, 'float');
+
         gl.bindVertexArray(this.canvasQuadVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -323,5 +332,24 @@ export class ParticleSystem {
 
     setConfig(config) {
         this.config = config;
+    }
+
+    setTrailDrawState(state) {
+        this.trailDrawState = state;
+    }
+
+    /**
+     * Read back the entity texture from GPU.
+     * Returns a Float32Array of (entityTexWidth * entityTexHeight * 4) floats.
+     * Each entity occupies 4 consecutive floats: [pos.x, pos.y, vel.x, vel.y].
+     */
+    readEntityData() {
+        const gl = this.gl;
+        const c = this.c;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.entityFBOs[this.entityPing]);
+        const data = new Float32Array(c.entityTexWidth * c.entityTexHeight * 4);
+        gl.readPixels(0, 0, c.entityTexWidth, c.entityTexHeight, gl.RGBA, gl.FLOAT, data);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        return data;
     }
 }

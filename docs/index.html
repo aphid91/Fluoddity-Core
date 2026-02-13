@@ -18,10 +18,16 @@
             right: 12px;
             z-index: 10;
             display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
+        }
+        .control-row {
+            display: flex;
             gap: 8px;
             align-items: center;
         }
-        #controls select, #controls button {
+        #controls select, #controls button, .dropdown-trigger {
             padding: 6px 12px;
             background: rgba(0, 0, 0, 0.6);
             color: #ccc;
@@ -31,8 +37,94 @@
             font-size: 14px;
             cursor: pointer;
         }
-        #controls select:hover, #controls button:hover { border-color: #999; }
+        #controls select:hover, #controls button:hover, .dropdown-trigger:hover {
+            border-color: #999;
+        }
         #controls select option { background: #222; color: #ccc; }
+
+        /* Slider rows */
+        .slider-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-family: monospace;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .slider-row label {
+            min-width: 80px;
+            text-align: right;
+        }
+        .slider-row input[type="range"] {
+            width: 120px;
+            accent-color: #888;
+        }
+        .slider-row .slider-value {
+            min-width: 32px;
+            text-align: left;
+            color: #ccc;
+        }
+
+        /* Mode toggle button */
+        #mode-toggle {
+            font-size: 12px;
+        }
+        #mode-toggle.draw-mode {
+            border-color: #e94;
+            color: #e94;
+        }
+
+        /* Draw sliders container */
+        #draw-controls {
+            display: none;
+        }
+        #draw-controls.visible {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Custom dropdown for config preview */
+        .custom-dropdown {
+            position: relative;
+        }
+        .dropdown-trigger {
+            min-width: 160px;
+            text-align: left;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 2px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #555;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            min-width: 200px;
+            z-index: 20;
+        }
+        .custom-dropdown.open .dropdown-menu {
+            display: block;
+        }
+        .dropdown-item {
+            padding: 6px 12px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #ccc;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .dropdown-item:hover {
+            background: rgba(100, 100, 100, 0.4);
+        }
+        .dropdown-item.active {
+            color: #fff;
+            background: rgba(80, 80, 120, 0.4);
+        }
+
         #error-display {
             position: fixed;
             bottom: 12px;
@@ -49,14 +141,42 @@
 </head>
 <body>
     <div id="controls">
-        <select id="world-size-selector" title="World Size / Quality">
-            <option value="0.08" selected>.08 (Potato/Phone)</option>
-            <option value="0.25">.25 (Low)</option>
-            <option value="0.5">.5 (Medium)</option>
-            <option value="1.0">1.0 (Large)</option>
-        </select>
-        <select id="preset-selector"></select>
-        <button id="reset-button">Reset</button>
+        <div class="control-row">
+            <div class="custom-dropdown" id="preset-dropdown">
+                <button class="dropdown-trigger" id="preset-trigger">Loading...</button>
+                <div class="dropdown-menu" id="preset-menu"></div>
+            </div>
+            <button id="undo-button">Undo (Right Click)</button>
+        </div>
+        <div class="control-row">
+            <select id="world-size-selector" title="World Size / Quality">
+                <option value="0.08" selected>.08 (Potato/Phone)</option>
+                <option value="0.25">.25 (Low)</option>
+                <option value="0.5">.5 (Medium)</option>
+                <option value="1.0">1.0 (Large)</option>
+            </select>
+            <button id="reset-button">Reset</button>
+        </div>
+        <div class="slider-row">
+            <label>Speed</label>
+            <input type="range" id="physics-freq" min="1" max="40" value="1" step="1">
+            <span class="slider-value" id="physics-freq-value">1</span>
+        </div>
+        <div class="control-row">
+            <button id="mode-toggle">Select Particle (T)</button>
+        </div>
+        <div id="draw-controls">
+            <div class="slider-row">
+                <label>Draw Size</label>
+                <input type="range" id="draw-size" min="0.01" max="0.5" value="0.1" step="0.001">
+                <span class="slider-value" id="draw-size-value">0.100</span>
+            </div>
+            <div class="slider-row">
+                <label>Draw Power</label>
+                <input type="range" id="draw-power" min="0.1" max="5.0" value="1.0" step="0.01">
+                <span class="slider-value" id="draw-power-value">1.00</span>
+            </div>
+        </div>
     </div>
     <canvas id="canvas"></canvas>
     <div id="error-display"></div>
