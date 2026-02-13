@@ -140,7 +140,7 @@ export function loadConfig(data) {
 }
 
 export async function fetchShader(path) {
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Failed to load shader: ${path}`);
     return response.text();
 }

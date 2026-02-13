@@ -33,8 +33,8 @@ export class ParticleSystem {
         this.frameCount = 0;
         this.c = computeConstants(worldSize, aspectRatio);
 
-        // Trail drawing state
-        this.trailDrawState = { x: 0, y: 0, radius: 0, power: 0 };
+        // Trail drawing state: current + previous mouse position, radius, power
+        this.trailDrawState = { x: 0, y: 0, prevX: 0, prevY: 0, radius: 0, power: 0 };
 
         // Programs (set in init(), persist across reinitGPU)
         this.entityUpdateProgram = null;
@@ -298,7 +298,7 @@ export class ParticleSystem {
 
         // Trail drawing uniforms
         const td = this.trailDrawState;
-        tryset(gl, prog, 'trail_draw_pos', [td.x, td.y]);
+        tryset(gl, prog, 'trail_draw_mouse', [td.x, td.y, td.prevX, td.prevY]);
         tryset(gl, prog, 'trail_draw_radius', td.radius, 'float');
         tryset(gl, prog, 'trail_draw_power', td.power, 'float');
 

@@ -46,7 +46,7 @@ const configCache = new Map();
 async function fetchConfig(name) {
     if (configCache.has(name)) return configCache.get(name);
     const path = `physics_configs/${name}.json`;
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status} loading ${path}`);
     const data = await response.json();
     const config = loadConfig(data);
@@ -84,7 +84,7 @@ async function main() {
     // Load preset manifest
     let presetNames;
     try {
-        const manifestResponse = await fetch('physics_configs/index.json');
+        const manifestResponse = await fetch('physics_configs/index.json', { cache: 'no-store' });
         if (!manifestResponse.ok) throw new Error(`HTTP ${manifestResponse.status}`);
         presetNames = await manifestResponse.json();
     } catch (e) {
@@ -167,6 +167,7 @@ async function main() {
     let mouseMode = 'select'; // 'select' or 'draw'
     let mouseDown = false;
     let mousePos = { x: 0, y: 0 }; // canvas UV [0,1]
+    let prevMousePos = { x: 0, y: 0 }; // previous frame's mouse UV
 
     // Preview state
     let previewActive = false;
@@ -239,7 +240,7 @@ async function main() {
             modeToggle.classList.remove('draw-mode');
             drawControls.classList.remove('visible');
             // Clear any active trail drawing
-            system.setTrailDrawState({ x: 0, y: 0, radius: 0, power: 0 });
+            system.setTrailDrawState({ x: 0, y: 0, prevX: 0, prevY: 0, radius: 0, power: 0 });
         }
     }
 
@@ -324,13 +325,16 @@ async function main() {
                 selectParticleAt(e.clientX, e.clientY);
             } else if (mouseMode === 'draw') {
                 mouseDown = true;
-                mousePos = screenToUV(e.clientX, e.clientY);
+                const uv = screenToUV(e.clientX, e.clientY);
+                mousePos = uv;
+                prevMousePos = { ...uv }; // same as current on first click (no velocity)
             }
         }
     });
 
     canvas.addEventListener('mousemove', (e) => {
         if (mouseMode === 'draw' && mouseDown) {
+            prevMousePos = { ...mousePos };
             mousePos = screenToUV(e.clientX, e.clientY);
         }
     });
@@ -339,7 +343,7 @@ async function main() {
         if (e.button === 0) {
             mouseDown = false;
             if (mouseMode === 'draw') {
-                system.setTrailDrawState({ x: 0, y: 0, radius: 0, power: 0 });
+                system.setTrailDrawState({ x: 0, y: 0, prevX: 0, prevY: 0, radius: 0, power: 0 });
             }
         }
     });
@@ -477,6 +481,8 @@ async function main() {
             system.setTrailDrawState({
                 x: mousePos.x,
                 y: mousePos.y,
+                prevX: prevMousePos.x,
+                prevY: prevMousePos.y,
                 radius: parseFloat(drawSizeSlider.value),
                 power: parseFloat(drawPowerSlider.value),
             });
@@ -486,9 +492,14 @@ async function main() {
             system.advance();
         }
 
+        // After advancing, sync prevMousePos so stationary mouse = zero velocity next frame
+        if (mouseMode === 'draw' && mouseDown) {
+            prevMousePos = { ...mousePos };
+        }
+
         // Clear trail draw after advance so it only applies while mouse is held
         if (mouseMode === 'draw' && !mouseDown) {
-            system.setTrailDrawState({ x: 0, y: 0, radius: 0, power: 0 });
+            system.setTrailDrawState({ x: 0, y: 0, prevX: 0, prevY: 0, radius: 0, power: 0 });
         }
 
         system.renderDisplay();

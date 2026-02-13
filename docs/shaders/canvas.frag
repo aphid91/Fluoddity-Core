@@ -24,7 +24,8 @@ uniform sampler2D canvas_texture;
 uniform int frame_count;
 
 // Trail drawing uniforms
-uniform vec2 trail_draw_pos;
+// trail_draw_mouse: vec4(current_x, current_y, previous_x, previous_y) in UV space
+uniform vec4 trail_draw_mouse;
 uniform float trail_draw_radius;
 uniform float trail_draw_power;
 
@@ -51,6 +52,11 @@ vec4 getBlur(vec2 pos, sampler2D sam, float diffusion_constant) {
     return (getCan(pos, sam) * K + nc + sc + wc + ec) / (4.0 + K);
 }
 
+// Gaussian kernel matching Fluoddity's draw_kernel
+float draw_kernel(float distance, float sigma) {
+    return exp(-distance * distance / (2.0 * sigma * sigma));
+}
+
 void main() {
     if (frame_count < 2) {
         canvas_out = vec4(0.0, 0.0, 0.0, 1.0);
@@ -67,17 +73,18 @@ void main() {
         canvas_color = texture(canvas_texture, uv);
     }
     canvas_out = canvas_color * config.trail_persistence + (1.0 - config.trail_persistence) * vec4(brush_color.xy, 0.0, 1.0);
-
-    // Trail drawing: deposit velocity-like trail at mouse position
+    // Trail drawing: deposit velocity from mouse movement onto canvas
     if (trail_draw_power > 0.0 && trail_draw_radius > 0.0) {
-        vec2 delta = uv - trail_draw_pos;
-        float dist = length(delta);
-        if (dist < trail_draw_radius) {
-            float falloff = exp(-dist * dist / (2.0 * trail_draw_radius * trail_draw_radius * 0.1));
-            float strength = trail_draw_power * falloff;
-            // Use direction from center to fragment as the trail velocity
-            vec2 draw_vel = normalize(delta + vec2(0.001));
-            canvas_out.xy += vec2(1);//draw_vel * strength * 0.01;
-        }
+        vec2 mouse_pos = trail_draw_mouse.xy;
+        vec2 prev_mouse = trail_draw_mouse.zw;
+        vec2 mouse_vel = mouse_pos - prev_mouse;
+
+        float dist = length(uv - mouse_pos);
+        float kernel_weight = draw_kernel(dist, trail_draw_radius);
+
+        // Draw velocity scaled by power, kernel, and persistence
+        // Matches Fluoddity: draw_vector * kernel_weight / draw_size * (1 - trail_persistence)
+        vec2 draw_vector = mouse_vel * (trail_draw_power / 5.0);
+        canvas_out.xy += draw_vector * kernel_weight / trail_draw_radius * (1.0 - config.trail_persistence);
     }
 }
