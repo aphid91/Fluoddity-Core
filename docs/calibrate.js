@@ -2,8 +2,11 @@
  * Auto-detection calibration: measures GPU performance at startup
  * to select optimal world size and physics speed.
  *
- * Uses gl.finish() to force GPU synchronization for accurate timing.
- * This is ONLY done during calibration, never during normal rendering.
+ * Uses gl.readPixels() on a 1x1 region to force GPU pipeline flush,
+ * which is the reliable way to synchronize in WebGL (gl.finish() is
+ * often a no-op on many drivers, especially mobile).
+ *
+ * This sync is ONLY done during calibration, never during normal rendering.
  */
 
 // Target frame time budget for physics (ms).
@@ -16,20 +19,49 @@ const PHYSICS_SPEED_TARGET = 10;
 // Available world sizes (must match <option> values in index.html)
 const WORLD_SIZES = [0.08, 0.25, 0.5, 1.0];
 
-const WARMUP_FRAMES = 3;
+const WARMUP_FRAMES = 2;
 const MEASURE_FRAMES = 5;
+
+// If a single warmup frame exceeds this, skip measuring and move on.
+const BAIL_THRESHOLD_MS = 200;
+
+// Scratch buffer for readPixels sync (1 pixel, RGBA float)
+const _syncBuf = new Float32Array(4);
+
+/**
+ * Force GPU to complete all pending work by reading back a single pixel.
+ * This is the only reliable GPU sync method in WebGL — gl.finish() is
+ * unreliable across browsers/drivers, especially on mobile.
+ */
+function gpuSync(gl, system) {
+    // Read 1 pixel from the canvas FBO that advance() just wrote to.
+    // The FBO is already bound after updateCanvas(), but bind explicitly
+    // to be safe in case something changed.
+    const fbo = system.canvasFBOs[system.canvasPing];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, _syncBuf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
 
 /**
  * Measure the median time (ms) for one physics frame at current settings.
- * Runs warmup frames first, then measures with gl.finish() for GPU sync.
+ * Returns null if warmup indicates this setting is way too slow (bail early).
  */
 function measureFrameTime(gl, system, physicsIterations) {
-    // Warmup: prime GPU caches and fill pipelines
+    // Warmup with early bail: if a single frame is absurdly slow, don't
+    // waste time running the full warmup + measurement cycle
     for (let i = 0; i < WARMUP_FRAMES; i++) {
+        const t0 = performance.now();
         for (let j = 0; j < physicsIterations; j++) {
             system.advance();
         }
-        gl.finish();
+        gpuSync(gl, system);
+        const elapsed = performance.now() - t0;
+
+        if (elapsed > BAIL_THRESHOLD_MS) {
+            // This setting is way too slow, bail early
+            return elapsed;
+        }
     }
 
     // Measure
@@ -39,7 +71,7 @@ function measureFrameTime(gl, system, physicsIterations) {
         for (let j = 0; j < physicsIterations; j++) {
             system.advance();
         }
-        gl.finish();
+        gpuSync(gl, system);
         times.push(performance.now() - t0);
     }
 
