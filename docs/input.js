@@ -35,11 +35,14 @@ export function screenToWorld(canvas, clientX, clientY, camera = null, constants
 export function screenToUV(canvas, clientX, clientY, camera = null, constants = null) {
     const rect = canvas.getBoundingClientRect();
     if (camera && constants) {
-        // Convert screen position through camera to canvas UV
+        // Convert screen position through camera to canvas UV.
+        // entity_update.frag maps entity pos to canvas UV via:
+        //   cuv = p / 2.0 * vec2(1, tex_aspect) + 0.5
+        // So: u = entity.x / 2 + 0.5,  v = entity.y / 2 * tex_aspect + 0.5
         const world = screenToWorld(canvas, clientX, clientY, camera, constants);
-        // Entity world space [-1,1] → canvas UV [0,1]
-        const u = (world.x + 1.0) * 0.5;
-        const v = (world.y + 1.0) * 0.5;
+        const texAspect = constants.canvasWidth / constants.canvasHeight;
+        const u = world.x / 2.0 + 0.5;
+        const v = world.y / 2.0 * texAspect + 0.5;
         return { x: u, y: v };
     }
     const u = (clientX - rect.left) / rect.width;
