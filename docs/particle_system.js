@@ -455,6 +455,7 @@ export class ParticleSystem {
         tryset(gl, prog, 'trail_draw_mouse', [td.x, td.y, td.prevX, td.prevY]);
         tryset(gl, prog, 'trail_draw_radius', td.radius, 'float');
         tryset(gl, prog, 'trail_draw_power', td.power, 'float');
+        tryset(gl, prog, 'canvas_resolution', [c.canvasWidth, c.canvasHeight]);
 
         gl.bindVertexArray(this.canvasQuadVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);

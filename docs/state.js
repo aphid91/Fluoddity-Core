@@ -21,6 +21,10 @@ export class RuleHistory {
         }
     }
 
+    reset(rule, seed) {
+        this.stack = [{ rule: Array.from(rule), seed }];
+    }
+
     pop() {
         if (this.stack.length <= 1) return null;
         this.stack.pop(); // remove current

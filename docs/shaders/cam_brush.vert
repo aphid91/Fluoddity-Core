@@ -80,6 +80,17 @@ void main() {
     bool visible = (center_ndc.x + max_extent >= -1.0 && center_ndc.x - max_extent <= 1.0 &&
                     center_ndc.y + max_extent >= -1.0 && center_ndc.y - max_extent <= 1.0);
 
+    // Cull entities outside the canvas's effective coverage area.
+    // The canvas is non-square but entities wrap in a square [-1,1]x[-1,1].
+    // Only entities within the canvas's aspect-corrected extent should render.
+    if (tex_aspect >= 1.0) {
+        float canvas_y_extent = 1.0 / tex_aspect;
+        visible = visible && (entity_pos.y >= -canvas_y_extent && entity_pos.y <= canvas_y_extent);
+    } else {
+        float canvas_x_extent = tex_aspect;
+        visible = visible && (entity_pos.x >= -canvas_x_extent && entity_pos.x <= canvas_x_extent);
+    }
+
     // Vertex position
     vec2 vertex_pos = entity_pos + (visible ? offsets[vertex_id] : vec2(0.0));
 

@@ -353,7 +353,7 @@ async function main() {
             };
 
             applyConfig(newConfig);
-            ruleHistory.push(newConfig.rule, newConfig.rule_seed);
+            ruleHistory.reset(newConfig.rule, newConfig.rule_seed);
             ui.el.presetTrigger.textContent = '(Pasted)';
             currentPresetName = null;
             console.log('Config loaded from clipboard');
@@ -379,7 +379,7 @@ async function main() {
         finalizePresetLoad(newConfig) {
             config = newConfig;
             system.setConfig(config);
-            ruleHistory.push(config.rule, config.rule_seed);
+            ruleHistory.reset(config.rule, config.rule_seed);
         },
         registerCloseDropdown(fn) { closeDropdownFn = fn; },
         logError: (msg) => logger.error(msg),
@@ -414,7 +414,15 @@ async function main() {
         worldSize = optimal.worldSize;
 
         // Update UI to reflect calibrated values
-        ui.el.worldSizeSelector.value = String(optimal.worldSize);
+        // Note: String(1.0) produces "1" which doesn't match option value "1.0",
+        // so we match by numeric value instead.
+        const wsOpts = ui.el.worldSizeSelector.options;
+        for (let i = 0; i < wsOpts.length; i++) {
+            if (parseFloat(wsOpts[i].value) === optimal.worldSize) {
+                ui.el.worldSizeSelector.selectedIndex = i;
+                break;
+            }
+        }
         ui.el.physicsFreqSlider.value = String(optimal.physicsSpeed);
         ui.el.physicsFreqValue.textContent = String(optimal.physicsSpeed);
     }

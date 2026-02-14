@@ -28,6 +28,7 @@ uniform int frame_count;
 uniform vec4 trail_draw_mouse;
 uniform float trail_draw_radius;
 uniform float trail_draw_power;
+uniform vec2 canvas_resolution;
 
 in vec2 uv;
 out vec4 canvas_out;
@@ -79,7 +80,9 @@ void main() {
         vec2 prev_mouse = trail_draw_mouse.zw;
         vec2 mouse_vel = mouse_pos - prev_mouse;
 
-        float dist = length(uv - mouse_pos);
+        vec2 delta = uv - mouse_pos;
+        delta.x *= canvas_resolution.x / canvas_resolution.y;
+        float dist = length(delta);
         float kernel_weight = draw_kernel(dist, trail_draw_radius);
 
         // Draw velocity scaled by power, kernel, and persistence
