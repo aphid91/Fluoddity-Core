@@ -4,7 +4,7 @@
     "axial_force": 0.16899999976158142,
     "lateral_force": -0.7070000171661377,
     "sensor_gain": 9.517000198364258,
-    "mutation_scale": 0.15199999511241913,
+    "mutation_scale": 0.0430000014603138,
     "drag": 0.30300000309944153,
     "strafe_power": 0.12200000137090683,
     "sensor_angle": 0.3840000033378601,
@@ -15,6 +15,42 @@
     "hazard_rate": 0.0
   },
   "slider_ranges": {
+    "Sensor Gain": [
+      0.0,
+      10.0,
+      0.0,
+      10.0
+    ],
+    "Sensor Angle": [
+      -1.0,
+      1.0,
+      -1.0,
+      1.0
+    ],
+    "Sensor Distance": [
+      0.0,
+      3.0,
+      0.0,
+      3.0
+    ],
+    "Mutation Scale": [
+      0.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    "Global Force Mult": [
+      0.0,
+      2.0,
+      0.0,
+      2.0
+    ],
+    "Drag": [
+      -1.0,
+      1.0,
+      -1.0,
+      1.0
+    ],
     "Axial Force": [
       -1.0,
       1.0,
@@ -27,47 +63,11 @@
       -1.0,
       1.0
     ],
-    "Sensor Gain": [
-      0.0,
-      10.0,
-      0.0,
-      10.0
-    ],
-    "Mutation Scale": [
-      0.0,
-      1.0,
-      0.0,
-      1.0
-    ],
-    "Drag": [
-      -1.0,
-      1.0,
-      -1.0,
-      1.0
-    ],
     "Strafe Power": [
       0.0,
       0.5,
       0.0,
       0.5
-    ],
-    "Sensor Angle": [
-      -1.0,
-      1.0,
-      -1.0,
-      1.0
-    ],
-    "Global Force Mult": [
-      0.0,
-      2.0,
-      0.0,
-      2.0
-    ],
-    "Sensor Distance": [
-      0.0,
-      3.0,
-      0.0,
-      3.0
     ],
     "Trail Persistence": [
       0.0,
@@ -90,50 +90,64 @@
   },
   "sweeps": {
     "x": {
+      "SENSOR_GAIN": 0.0,
+      "SENSOR_ANGLE": 0.0,
+      "SENSOR_DISTANCE": 0.0,
+      "MUTATION_SCALE": 0.0,
+      "GLOBAL_FORCE_MULT": 0.0,
+      "DRAG": 0.0,
       "AXIAL_FORCE": 0.0,
       "LATERAL_FORCE": 0.0,
-      "SENSOR_GAIN": 0.0,
-      "MUTATION_SCALE": 0.0,
-      "DRAG": 0.0,
       "STRAFE_POWER": 0.0,
-      "SENSOR_ANGLE": 0.0,
-      "GLOBAL_FORCE_MULT": 0.0,
-      "SENSOR_DISTANCE": 0.0,
       "TRAIL_PERSISTENCE": 0.0,
       "TRAIL_DIFFUSION": 0.0,
       "HAZARD_RATE": 0.0,
       "x": 0.0
     },
     "y": {
+      "SENSOR_GAIN": 0.0,
+      "SENSOR_ANGLE": 0.0,
+      "SENSOR_DISTANCE": 0.0,
+      "MUTATION_SCALE": 0.0,
+      "GLOBAL_FORCE_MULT": 0.0,
+      "DRAG": 0.0,
       "AXIAL_FORCE": 0.0,
       "LATERAL_FORCE": 0.0,
-      "SENSOR_GAIN": 0.0,
-      "MUTATION_SCALE": 0.0,
-      "DRAG": 0.0,
       "STRAFE_POWER": 0.0,
-      "SENSOR_ANGLE": 0.0,
-      "GLOBAL_FORCE_MULT": 0.0,
-      "SENSOR_DISTANCE": 0.0,
       "TRAIL_PERSISTENCE": 0.0,
       "TRAIL_DIFFUSION": 0.0,
       "HAZARD_RATE": 0.0,
       "y": 0.0
     },
     "cohort": {
+      "SENSOR_GAIN": 0.0,
+      "SENSOR_ANGLE": 0.0,
+      "SENSOR_DISTANCE": 0.0,
+      "MUTATION_SCALE": 0.0,
+      "GLOBAL_FORCE_MULT": 0.0,
+      "DRAG": 0.0,
       "AXIAL_FORCE": 0.0,
       "LATERAL_FORCE": 0.0,
-      "SENSOR_GAIN": 0.0,
-      "MUTATION_SCALE": 0.0,
-      "DRAG": 0.0,
       "STRAFE_POWER": 0.0,
-      "SENSOR_ANGLE": 0.0,
-      "GLOBAL_FORCE_MULT": 0.0,
-      "SENSOR_DISTANCE": 0.0,
       "TRAIL_PERSISTENCE": 0.0,
       "TRAIL_DIFFUSION": 0.0,
       "HAZARD_RATE": 0.0,
       "cohort": 0.0
     }
+  },
+  "jitters": {
+    "SENSOR_GAIN": 0.0,
+    "SENSOR_ANGLE": 0.0,
+    "SENSOR_DISTANCE": 0.0,
+    "MUTATION_SCALE": 0.0,
+    "GLOBAL_FORCE_MULT": 0.0,
+    "DRAG": 0.0,
+    "AXIAL_FORCE": 0.0,
+    "LATERAL_FORCE": 0.0,
+    "STRAFE_POWER": 0.0,
+    "TRAIL_PERSISTENCE": 0.0,
+    "TRAIL_DIFFUSION": 0.0,
+    "HAZARD_RATE": 0.0
   },
   "parameter_sweeps_enabled": false,
   "settings": {
@@ -142,13 +156,13 @@
     "orientation_mix": 0.3499999940395355,
     "boundary_conditions": 0,
     "initial_conditions": 1,
-    "num_cohorts": 1,
-    "rule_seed": 0.5567682634596183
+    "num_cohorts": 6,
+    "rule_seed": 0.28292382600789767
   },
   "appearance": {
     "ink_weight": 1.0,
     "hue_sensitivity": 0.05299999937415123,
-    "color_by_cohort": false,
+    "color_by_cohort": true,
     "watercolor_mode": false,
     "emboss_mode": 0,
     "emboss_intensity": 0.5,
