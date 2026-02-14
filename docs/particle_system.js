@@ -473,7 +473,7 @@ export class ParticleSystem {
                     });
                 }
                 // Render directly to screen while bloom resources are loading
-                this.renderCamBrush(camera, null);
+                this.renderCamBrush(camera, null, brightness);
                 return;
             }
 
@@ -487,13 +487,13 @@ export class ParticleSystem {
             }
 
             // Step 1: Render cam_brush to intermediate RGBA32F FBO
-            this.renderCamBrush(camera, this.camBrushFBO);
+            this.renderCamBrush(camera, this.camBrushFBO, brightness);
 
             // Step 2: Bloom (downsample + blit + upsample)
             this._bloomPass();
 
             // Step 3: Tonemap to screen
-            this._tonemapPass(brightness);
+            this._tonemapPass();
         } else {
             const gl = this.gl;
             const prog = this.cameraProgram;
@@ -513,7 +513,7 @@ export class ParticleSystem {
         }
     }
 
-    renderCamBrush(camera, targetFBO) {
+    renderCamBrush(camera, targetFBO, brightness) {
         const gl = this.gl;
         const prog = this.camBrushProgram;
         const c = this.c;
@@ -538,6 +538,7 @@ export class ParticleSystem {
         tryset(gl, prog, 'cam_zoom', camera.zoom, 'float');
         tryset(gl, prog, 'window_size', [gl.canvas.width, gl.canvas.height]);
         tryset(gl, prog, 'canvas_resolution', [c.canvasWidth, c.canvasHeight]);
+        tryset(gl, prog, 'brightness', brightness, 'float');
 
         // Additive blending
         gl.enable(gl.BLEND);
@@ -625,7 +626,7 @@ export class ParticleSystem {
         gl.disable(gl.BLEND);
     }
 
-    _tonemapPass(brightness) {
+    _tonemapPass() {
         const gl = this.gl;
         const prog = this.tonemapProgram;
 
@@ -636,7 +637,6 @@ export class ParticleSystem {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.bloomCopyTexture);
         tryset(gl, prog, 'source_tex', 0);
-        tryset(gl, prog, 'brightness', brightness, 'float');
 
         gl.bindVertexArray(this.tonemapVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);

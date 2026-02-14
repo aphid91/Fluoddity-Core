@@ -5,6 +5,8 @@ in vec2 v_uv;
 in vec4 v_color;  // (hue, saturation, brightness, alpha)
 layout(location = 0) out vec4 fragColor;
 
+uniform float brightness;
+
 vec3 hsv2rgb(vec3 c) {
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
@@ -28,6 +30,7 @@ void main() {
 
     float kernel = 0.5 * gaussian(centered_uv, 0.163);
 
-    vec3 rgb = hsv2rgb(v_color.xyz);
+    float BRIGHTNESS_CONSTANT = 3.;
+    vec3 rgb = hsv2rgb(v_color.xyz)*brightness*BRIGHTNESS_CONSTANT;
     fragColor = vec4(rgb, v_color.w * kernel);
 }

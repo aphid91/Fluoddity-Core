@@ -14,7 +14,7 @@
 const FRAME_TIME_BUDGET_MS = 15.0;
 
 // Target physics speed (iterations per frame). No use going above this.
-const PHYSICS_SPEED_TARGET = 12;
+const PHYSICS_SPEED_TARGET = 8;
 
 // Available world sizes (must match <option> values in index.html)
 const WORLD_SIZES = [0.08, 0.25, 0.5, 1.0];
