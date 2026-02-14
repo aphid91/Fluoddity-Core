@@ -178,7 +178,7 @@
                 <option value="0.5">.5 (Medium)</option>
                 <option value="1.0">1.0 (Large)</option>
             </select>
-            <button id="reset-button">Reset</button>
+            <button id="reset-button">Reset (R)</button>
         </div>
         <div class="slider-row">
             <label>Brightness</label>
@@ -187,7 +187,8 @@
         </div>
         <div class="slider-row">
             <label>Speed</label>
-            <input type="range" id="physics-freq" min="1" max="40" value="1" step="1">
+            <input type="range" id="physics-freq" min="1" max="40" value="1" step="1"
+                   title="This controls how many physics updates we do per frame. Careful: this can hurt performance.">
             <span class="slider-value" id="physics-freq-value">1</span>
         </div>
         <div class="control-row">

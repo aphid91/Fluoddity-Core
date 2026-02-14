@@ -45,14 +45,16 @@ export class RuleHistory {
 const configCache = new Map();
 
 export async function fetchConfig(name) {
-    if (configCache.has(name)) return configCache.get(name);
-    const path = `physics_configs/${name}.json`;
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status} loading ${path}`);
-    const data = await response.json();
-    const config = loadConfig(data);
-    configCache.set(name, config);
-    return config;
+    if (!configCache.has(name)) {
+        const path = `physics_configs/${name}.json`;
+        const response = await fetch(path, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status} loading ${path}`);
+        const data = await response.json();
+        configCache.set(name, loadConfig(data));
+    }
+    // Return a fresh copy so callers never mutate the cached original
+    const cached = configCache.get(name);
+    return { ...cached, rule: Array.from(cached.rule) };
 }
 
 // ─── Shared app state ────────────────────────────────────────────────────────
