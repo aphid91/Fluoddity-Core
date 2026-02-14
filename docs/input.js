@@ -76,6 +76,14 @@ export function setupKeyboard(state, actions) {
             case 'G':
                 actions.randomizeSeed();
                 break;
+            case 'c':
+            case 'C':
+                actions.saveConfig();
+                break;
+            case 'v':
+            case 'V':
+                actions.loadConfig();
+                break;
             case 'Escape':
                 if (state.dropdownOpen) {
                     actions.closeDropdown(true);

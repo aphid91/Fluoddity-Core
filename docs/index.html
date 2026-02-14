@@ -149,10 +149,10 @@
     <div id="controls">
         <div class="control-row">
             <div class="custom-dropdown" id="preset-dropdown">
-                <button class="dropdown-trigger" id="preset-trigger">Loading...</button>
+                <button class="dropdown-trigger" id="preset-trigger" title="Presets">Loading...</button>
                 <div class="dropdown-menu" id="preset-menu"></div>
             </div>
-            <button id="undo-button">Undo (Right Click)</button>
+            <button id="undo-button" title="Reverses the most recent particle selection (left-click) or seed change (G)">Undo (Right Click)</button>
         </div>
         <div class="control-row">
             <select id="world-size-selector" title="World Size / Quality">
@@ -174,7 +174,7 @@
             <span class="slider-value" id="physics-freq-value">1</span>
         </div>
         <div class="control-row">
-            <button id="mode-toggle">Select Particle (T)</button>
+            <button id="mode-toggle" title="Mouse mode: In Select Particle mode, click on a particle to adopt it's behavior (with mutations)">Select Particle (T)</button>
         </div>
         <div id="draw-controls">
             <div class="slider-row">

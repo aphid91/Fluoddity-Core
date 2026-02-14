@@ -65,10 +65,12 @@ function setupModeToggle(el, state, actions) {
 export function updateModeDisplay(el, state) {
     if (state.mouseMode === 'draw') {
         el.modeToggle.textContent = 'Draw Trail (T)';
+        el.modeToggle.title = 'Mouse mode: In Draw Trail mode, click and drag to influence particles';
         el.modeToggle.classList.add('draw-mode');
         el.drawControls.classList.add('visible');
     } else {
         el.modeToggle.textContent = 'Select Particle (T)';
+        el.modeToggle.title = "Mouse mode: In Select Particle mode, click on a particle to adopt it's behavior (with mutations)";
         el.modeToggle.classList.remove('draw-mode');
         el.drawControls.classList.remove('visible');
     }

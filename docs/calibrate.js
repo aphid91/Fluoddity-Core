@@ -11,10 +11,10 @@
 
 // Target frame time budget for physics (ms).
 // At 60fps total budget is ~16.67ms; we leave headroom for rendering/bloom.
-const FRAME_TIME_BUDGET_MS = 10.0;
+const FRAME_TIME_BUDGET_MS = 20.0;
 
 // Target physics speed (iterations per frame). No use going above this.
-const PHYSICS_SPEED_TARGET = 10;
+const PHYSICS_SPEED_TARGET = 80;
 
 // Available world sizes (must match <option> values in index.html)
 const WORLD_SIZES = [0.08, 0.25, 0.5, 1.0];

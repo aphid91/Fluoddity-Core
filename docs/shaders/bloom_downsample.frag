@@ -4,7 +4,7 @@ precision highp float;
 // First pass applies threshold to extract bright regions.
 // Subsequent passes just downsample.
 
-#define BLOOM_THRESHOLD 0.8
+#define BLOOM_THRESHOLD 0.18
 
 uniform sampler2D source_tex;
 uniform vec2 source_texel_size;  // 1.0 / source resolution

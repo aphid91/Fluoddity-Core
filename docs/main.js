@@ -12,6 +12,109 @@ import { setupUI, updateModeDisplay } from './ui.js';
 import { createLogger } from './log.js';
 import { calibrate } from './calibrate.js';
 
+// ─── Save/Load utilities (SIM7 cross-compatible format) ─────────────────────
+
+async function zlibCompress(data) {
+    const cs = new CompressionStream('deflate');
+    const writer = cs.writable.getWriter();
+    writer.write(data);
+    writer.close();
+    const chunks = [];
+    const reader = cs.readable.getReader();
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+    }
+    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+
+async function zlibDecompress(data) {
+    const ds = new DecompressionStream('deflate');
+    const writer = ds.writable.getWriter();
+    writer.write(data);
+    writer.close();
+    const chunks = [];
+    const reader = ds.readable.getReader();
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+    }
+    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+
+function toUrlSafeBase64(bytes) {
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function fromUrlSafeBase64(str) {
+    let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4 !== 0) {
+        b64 += '=';
+    }
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+
+// Default sweep/jitter keys matching Python's PHYSICS_PARAM_NAMES
+const PARAM_NAMES = [
+    'SENSOR_GAIN', 'SENSOR_ANGLE', 'SENSOR_DISTANCE', 'MUTATION_SCALE',
+    'GLOBAL_FORCE_MULT', 'DRAG', 'AXIAL_FORCE', 'LATERAL_FORCE',
+    'STRAFE_POWER', 'TRAIL_PERSISTENCE', 'TRAIL_DIFFUSION', 'HAZARD_RATE',
+];
+
+function defaultSweeps() {
+    const d = {};
+    for (const p of PARAM_NAMES) d[p] = 0.0;
+    return d;
+}
+
+function defaultJitters() {
+    const d = {};
+    for (const p of PARAM_NAMES) d[p] = 0.0;
+    return d;
+}
+
+function defaultSliderRanges() {
+    return {
+        "Sensor Gain": [0.0, 5.0, 0.0, 5.0],
+        "Sensor Angle": [-1.0, 1.0, -1.0, 1.0],
+        "Sensor Distance": [0.0, 4.0, 0.0, 4.0],
+        "Mutation Scale": [-0.5, 0.5, -0.5, 0.5],
+        "Global Force Mult": [0.0, 2.0, 0.0, 2.0],
+        "Drag": [-1.0, 1.0, -1.0, 1.0],
+        "Axial Force": [-1.0, 1.0, -1.0, 1.0],
+        "Lateral Force": [-1.0, 1.0, -1.0, 1.0],
+        "Strafe Power": [0.0, 0.5, 0.0, 0.5],
+        "Trail Persistence": [0.0, 1.0, 0.0, 1.0],
+        "Trail Diffusion": [0.0, 1.0, 0.0, 1.0],
+        "Hazard Rate": [0.0, 0.05, 0.0, 0.05],
+    };
+}
+
 async function main() {
     const canvas = document.getElementById('canvas');
     const logger = createLogger(document.getElementById('error-display'));
@@ -156,6 +259,109 @@ async function main() {
         state.camera.zoom = 1.0;
     }
 
+    async function saveConfig() {
+        const v7 = {
+            version: 7,
+            physics: {
+                sensor_gain: config.sensor_gain,
+                sensor_angle: config.sensor_angle,
+                sensor_distance: config.sensor_distance,
+                mutation_scale: config.mutation_scale,
+                global_force_mult: config.global_force_mult,
+                drag: config.drag,
+                strafe_power: config.strafe_power,
+                axial_force: config.axial_force,
+                lateral_force: config.lateral_force,
+                hazard_rate: config.hazard_rate,
+                trail_persistence: config.trail_persistence,
+                trail_diffusion: config.trail_diffusion,
+            },
+            slider_ranges: defaultSliderRanges(),
+            sweeps: { x: defaultSweeps(), y: defaultSweeps(), cohort: defaultSweeps() },
+            jitters: defaultJitters(),
+            parameter_sweeps_enabled: false,
+            settings: {
+                disable_symmetry: false,
+                absolute_orientation: 0,
+                orientation_mix: 1.0,
+                boundary_conditions: 0,
+                initial_conditions: 0,
+                num_cohorts: config.cohorts,
+                rule_seed: config.rule_seed,
+            },
+            appearance: {
+                ink_weight: 1.0,
+                hue_sensitivity: 0.5,
+                color_by_cohort: true,
+                watercolor_mode: false,
+                emboss_mode: 0,
+                emboss_intensity: 0.5,
+                emboss_smoothness: 0.1,
+            },
+            rule: Array.from(config.rule),
+            notes: "",
+        };
+        try {
+            const jsonBytes = new TextEncoder().encode(JSON.stringify(v7));
+            const compressed = await zlibCompress(jsonBytes);
+            const saveString = 'SIM7:' + toUrlSafeBase64(compressed);
+            await navigator.clipboard.writeText(saveString);
+            console.log(`Config saved to clipboard (${saveString.length} chars)`);
+        } catch (err) {
+            logger.error(`Save failed: ${err.message}`);
+        }
+    }
+
+    async function loadConfigFromClipboard() {
+        try {
+            const text = (await navigator.clipboard.readText()).trim();
+            if (!text.startsWith('SIM')) {
+                logger.error('Clipboard does not contain a valid Fluoddity config');
+                return;
+            }
+            const colonIdx = text.indexOf(':');
+            if (colonIdx === -1) {
+                logger.error('Invalid config format');
+                return;
+            }
+            const version = parseInt(text.substring(3, colonIdx), 10);
+            if (version !== 7) {
+                logger.error(`Unsupported config version: ${version} (expected 7)`);
+                return;
+            }
+            const encoded = text.substring(colonIdx + 1);
+            const compressed = fromUrlSafeBase64(encoded);
+            const jsonBytes = await zlibDecompress(compressed);
+            const data = JSON.parse(new TextDecoder().decode(jsonBytes));
+
+            const newConfig = {
+                cohorts: data.settings.num_cohorts,
+                rule_seed: data.settings.rule_seed,
+                sensor_gain: data.physics.sensor_gain,
+                sensor_angle: data.physics.sensor_angle,
+                sensor_distance: data.physics.sensor_distance,
+                mutation_scale: data.physics.mutation_scale,
+                global_force_mult: data.physics.global_force_mult,
+                drag: data.physics.drag,
+                strafe_power: data.physics.strafe_power,
+                axial_force: data.physics.axial_force,
+                lateral_force: data.physics.lateral_force,
+                hazard_rate: data.physics.hazard_rate,
+                trail_persistence: data.physics.trail_persistence,
+                trail_diffusion: data.physics.trail_diffusion,
+                rule: data.rule,
+            };
+
+            applyConfig(newConfig);
+            ruleHistory.push(newConfig.rule, newConfig.rule_seed);
+            ui.el.presetTrigger.textContent = '(Pasted)';
+            currentPresetName = null;
+            console.log('Config loaded from clipboard');
+        } catch (err) {
+            logger.error(`Load failed: ${err.message}`);
+        }
+    }
+
     // Dropdown needs a way to register its closeDropdown for keyboard use
     let closeDropdownFn = null;
 
@@ -187,6 +393,8 @@ async function main() {
         resetSimulation,
         randomizeSeed,
         closeDropdown: (restore) => closeDropdownFn && closeDropdownFn(restore),
+        saveConfig,
+        loadConfig: loadConfigFromClipboard,
     });
 
     setupMouse(canvas, state, {
