@@ -33,6 +33,7 @@ struct ConfigData {
     float trail_diffusion;
 };
 uniform ConfigData config;
+uniform int initial_conditions;  // 0=Grid, 1=Random, 2=Ring
 
 #define PI 3.1415926
 
@@ -135,9 +136,29 @@ float get_cohort(int index) {
 }
 
 vec4 do_reset(int index) {
+    vec2 cansz = vec2(textureSize(canvas_texture,0));
     float cohort_val = get_cohort(index);
-    vec2 pos = vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
+    vec2 pos = .019*(vec2(hash(vec2(cohort_val)),hash(vec2(cohort_val+float(index)+2.142)))-.5);
     vec2 vel = 0.01 * 0.005 * (vec2(hash(vec2(cohort_val, float(index))), hash(vec2(cohort_val, pos.y))) * 2.0 - 1.0);
+    int cohorts = config.cohorts;
+    if(initial_conditions == 0){
+        //GRID: position different cohorts at different places in a grid
+        float aspect = cansz.y/cansz.x;
+        float spots=float(cohorts);
+        float spot_rows=ceil(sqrt(spots));
+        vec2 gridcell=vec2(int(cohort_val)%int(spot_rows),(int(cohort_val))/int(spot_rows));
+        pos+=vec2(1.,aspect)*1.8*((gridcell)/spot_rows+ (1./2.*(1./spot_rows-1.)));
+    }
+    else if(initial_conditions == 1) {
+        //RANDOM: scatter cohorts randomly across the canvas, homogenous start
+        pos = vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
+    }
+    else{
+         //RING: arrange cohorts in a ring pattern
+        float angle = cohort_val / float(cohorts) * 2.0 * PI;
+        float radius = 0.5*min(cansz.y/cansz.x,cansz.x/cansz.y);
+        pos += vec2(cos(angle), sin(angle)) * radius;
+    }
     return vec4(pos, vel);
 }
 

@@ -202,8 +202,9 @@ export function updateCamera(state, dt) {
     // Shader uses: ndc -= cam_pos * vec2(1, -1) / cam_zoom
     // So increasing posX shifts view right, decreasing posY shifts view up
     const panSpeed = 1.5 * cam.zoom * dt;
-    if (keys.a) cam.posX -= panSpeed;
-    if (keys.d) cam.posX += panSpeed;
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    if (keys.a) cam.posX -= panSpeed / aspectRatio;
+    if (keys.d) cam.posX += panSpeed / aspectRatio;
     if (keys.w) cam.posY -= panSpeed;
     if (keys.s) cam.posY += panSpeed;
 

@@ -391,6 +391,7 @@ export class ParticleSystem {
         tryset(gl, prog, 'entity_count', c.entityCount);
         tryset(gl, prog, 'entity_tex_width', c.entityTexWidth);
         tryset(gl, prog, 'sqrt_world_size', c.sqrtWorldSize, 'float');
+        tryset(gl, prog, 'initial_conditions', this.config.initial_conditions || 0);
 
         gl.bindVertexArray(this.fullscreenQuadVAO);
         gl.drawArrays(gl.TRIANGLES, 0, 6);

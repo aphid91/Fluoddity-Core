@@ -136,6 +136,7 @@ export function loadConfig(data) {
         trail_persistence: physics.trail_persistence,
         trail_diffusion: physics.trail_diffusion,
         rule: data.rule,
+        initial_conditions: settings.initial_conditions !== undefined ? settings.initial_conditions : 0,
     };
 }
 

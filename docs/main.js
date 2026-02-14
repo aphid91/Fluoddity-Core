@@ -8,7 +8,7 @@ import { ParticleSystem } from './particle_system.js';
 import { computeEntityRule } from './rule_utils.js';
 import { RuleHistory, fetchConfig, createAppState } from './state.js';
 import { setupKeyboard, setupMouse, setupScroll, screenToWorld, updateCamera } from './input.js';
-import { setupUI, updateModeDisplay } from './ui.js';
+import { setupUI, updateModeDisplay, updateInitialConditionsDisplay, updateMutationScaleDisplay, updateCohortsDisplay } from './ui.js';
 import { createLogger } from './log.js';
 import { calibrate } from './calibrate.js';
 
@@ -183,6 +183,9 @@ async function main() {
     function applyConfig(newConfig) {
         config = newConfig;
         system.setConfig(config);
+        updateInitialConditionsDisplay(ui.el, config);
+        updateMutationScaleDisplay(ui.el, config);
+        updateCohortsDisplay(ui.el, config);
     }
 
     function applyRule(rule, seed) {
@@ -219,6 +222,13 @@ async function main() {
         const newSeed = Math.random();
         ruleHistory.push(current.rule, newSeed);
         applyRule(current.rule, newSeed);
+    }
+
+    function cycleInitialConditions() {
+        const current = config.initial_conditions || 0;
+        config.initial_conditions = (current + 1) % 3;
+        system.setConfig(config);
+        updateInitialConditionsDisplay(ui.el, config);
     }
 
     function selectParticleAt(clientX, clientY) {
@@ -285,7 +295,7 @@ async function main() {
                 absolute_orientation: 0,
                 orientation_mix: 1.0,
                 boundary_conditions: 0,
-                initial_conditions: 0,
+                initial_conditions: config.initial_conditions || 0,
                 num_cohorts: config.cohorts,
                 rule_seed: config.rule_seed,
             },
@@ -350,6 +360,7 @@ async function main() {
                 trail_persistence: data.physics.trail_persistence,
                 trail_diffusion: data.physics.trail_diffusion,
                 rule: data.rule,
+                initial_conditions: data.settings.initial_conditions !== undefined ? data.settings.initial_conditions : 0,
             };
 
             applyConfig(newConfig);
@@ -373,6 +384,15 @@ async function main() {
         resetSimulation,
         applyConfig,
         changeWorldSize,
+        cycleInitialConditions,
+        onMutationScaleChange(value) {
+            config.mutation_scale = value;
+            system.setConfig(config);
+        },
+        onCohortsChange(value) {
+            config.cohorts = value;
+            system.setConfig(config);
+        },
         getCurrentPresetName: () => currentPresetName,
         setCurrentPresetName: (name) => { currentPresetName = name; },
         snapshotConfig: () => ({ ...config, rule: Array.from(config.rule) }),
@@ -380,6 +400,9 @@ async function main() {
             config = newConfig;
             system.setConfig(config);
             ruleHistory.reset(config.rule, config.rule_seed);
+            updateInitialConditionsDisplay(ui.el, config);
+            updateMutationScaleDisplay(ui.el, config);
+            updateCohortsDisplay(ui.el, config);
         },
         registerCloseDropdown(fn) { closeDropdownFn = fn; },
         logError: (msg) => logger.error(msg),
@@ -427,6 +450,11 @@ async function main() {
         ui.el.physicsFreqValue.textContent = String(optimal.physicsSpeed);
     }
     document.getElementById('calibration-overlay').style.display = 'none';
+
+    // Sync new controls with initially loaded config
+    updateInitialConditionsDisplay(ui.el, config);
+    updateMutationScaleDisplay(ui.el, config);
+    updateCohortsDisplay(ui.el, config);
 
     // ─── Resize ───────────────────────────────────────────────────────────────
 

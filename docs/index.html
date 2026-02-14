@@ -22,12 +22,22 @@
             gap: 6px;
             align-items: flex-end;
         }
+        #controls-left {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-start;
+        }
         .control-row {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-        #controls select, #controls button, .dropdown-trigger {
+        #controls select, #controls button, #controls-left select, #controls-left button, .dropdown-trigger {
             padding: 6px 12px;
             background: rgba(0, 0, 0, 0.6);
             color: #ccc;
@@ -37,10 +47,15 @@
             font-size: 14px;
             cursor: pointer;
         }
-        #controls select:hover, #controls button:hover, .dropdown-trigger:hover {
+        #controls select:hover, #controls button:hover, #controls-left select:hover, #controls-left button:hover, .dropdown-trigger:hover {
             border-color: #999;
         }
-        #controls select option { background: #222; color: #ccc; }
+        #controls select option, #controls-left select option { background: #222; color: #ccc; }
+        .control-label {
+            font-family: monospace;
+            font-size: 14px;
+            color: #aaa;
+        }
 
         /* Slider rows */
         .slider-row {
@@ -148,6 +163,7 @@
 <body>
     <div id="controls">
         <div class="control-row">
+            <span class="control-label">Presets:</span>
             <div class="custom-dropdown" id="preset-dropdown">
                 <button class="dropdown-trigger" id="preset-trigger" title="Presets">Loading...</button>
                 <div class="dropdown-menu" id="preset-menu"></div>
@@ -155,6 +171,7 @@
             <button id="undo-button" title="Reverses the most recent particle selection (left-click) or seed change (G)">Undo (Right Click)</button>
         </div>
         <div class="control-row">
+            <span class="control-label">World size:</span>
             <select id="world-size-selector" title="World Size / Quality">
                 <option value="0.08" selected>.08 (Potato/Phone)</option>
                 <option value="0.25">.25 (Low)</option>
@@ -187,6 +204,28 @@
                 <input type="range" id="draw-power" min="0.1" max="5.0" value="1.0" step="0.01">
                 <span class="slider-value" id="draw-power-value">1.00</span>
             </div>
+        </div>
+    </div>
+    <div id="controls-left">
+        <div class="control-row">
+            <button id="initial-conditions-toggle">Starting Positions: Grid</button>
+        </div>
+        <div class="slider-row">
+            <label>Mutation Scale</label>
+            <input type="range" id="mutation-scale-slider" min="0" max="1.0" value="0.1" step="0.001"
+                   title="At 0 every cohort has the same behavior, at 1, they are nearly random">
+            <span class="slider-value" id="mutation-scale-value">0.100</span>
+        </div>
+        <div class="control-row">
+            <span class="control-label">Cohorts:</span>
+            <select id="cohorts-selector" title="The number of cohorts determines how many distinct 'species' exist at once">
+                <option value="1">1</option>
+                <option value="4">4</option>
+                <option value="9">9</option>
+                <option value="16">16</option>
+                <option value="36">36</option>
+                <option value="64">64</option>
+            </select>
         </div>
     </div>
     <canvas id="canvas"></canvas>

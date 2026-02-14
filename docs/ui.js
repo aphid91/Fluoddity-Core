@@ -29,12 +29,16 @@ function getElements() {
         presetMenu: document.getElementById('preset-menu'),
         brightnessSlider: document.getElementById('brightness-slider'),
         brightnessValue: document.getElementById('brightness-value'),
+        initialConditionsToggle: document.getElementById('initial-conditions-toggle'),
+        mutationScaleSlider: document.getElementById('mutation-scale-slider'),
+        mutationScaleValue: document.getElementById('mutation-scale-value'),
+        cohortsSelector: document.getElementById('cohorts-selector'),
     };
 }
 
 // ─── Slider setup (with auto-blur fix) ──────────────────────────────────────
 
-function setupSliders(el) {
+function setupSliders(el, actions) {
     el.physicsFreqSlider.addEventListener('input', () => {
         el.physicsFreqValue.textContent = el.physicsFreqSlider.value;
     });
@@ -54,6 +58,12 @@ function setupSliders(el) {
         el.brightnessValue.textContent = parseFloat(el.brightnessSlider.value).toFixed(3);
     });
     el.brightnessSlider.addEventListener('change', () => el.brightnessSlider.blur());
+
+    el.mutationScaleSlider.addEventListener('input', () => {
+        el.mutationScaleValue.textContent = parseFloat(el.mutationScaleSlider.value).toFixed(3);
+        actions.onMutationScaleChange(parseFloat(el.mutationScaleSlider.value));
+    });
+    el.mutationScaleSlider.addEventListener('change', () => el.mutationScaleSlider.blur());
 }
 
 // ─── Mode toggle ────────────────────────────────────────────────────────────
@@ -73,6 +83,59 @@ export function updateModeDisplay(el, state) {
         el.modeToggle.title = "Mouse mode: In Select Particle mode, click on a particle to adopt it's behavior (with mutations)";
         el.modeToggle.classList.remove('draw-mode');
         el.drawControls.classList.remove('visible');
+    }
+}
+
+// ─── Initial conditions display ─────────────────────────────────────────────
+
+const INITIAL_CONDITIONS_LABELS = ['Grid', 'Random', 'Ring'];
+
+export function updateInitialConditionsDisplay(el, config) {
+    const mode = config.initial_conditions || 0;
+    const label = INITIAL_CONDITIONS_LABELS[mode] || `Mode ${mode}`;
+    el.initialConditionsToggle.textContent = `Starting Positions: ${label}`;
+}
+
+// ─── Mutation scale display ─────────────────────────────────────────────────
+
+export function updateMutationScaleDisplay(el, config) {
+    const val = config.mutation_scale;
+    if (val > parseFloat(el.mutationScaleSlider.max)) {
+        el.mutationScaleSlider.max = String(val);
+    }
+    if (val < parseFloat(el.mutationScaleSlider.min)) {
+        el.mutationScaleSlider.min = String(val);
+    }
+    el.mutationScaleSlider.value = String(val);
+    el.mutationScaleValue.textContent = val.toFixed(3);
+}
+
+// ─── Cohorts display ────────────────────────────────────────────────────────
+
+export function updateCohortsDisplay(el, config) {
+    const val = config.cohorts;
+    const opts = el.cohortsSelector.options;
+    // Remove any previously added non-standard option
+    for (let i = opts.length - 1; i >= 0; i--) {
+        if (opts[i].dataset.nonstandard === 'true') {
+            el.cohortsSelector.remove(i);
+        }
+    }
+    let found = false;
+    for (let i = 0; i < opts.length; i++) {
+        if (parseInt(opts[i].value) === val) {
+            el.cohortsSelector.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        const opt = document.createElement('option');
+        opt.value = String(val);
+        opt.textContent = String(val);
+        opt.dataset.nonstandard = 'true';
+        el.cohortsSelector.appendChild(opt);
+        el.cohortsSelector.value = String(val);
     }
 }
 
@@ -206,7 +269,7 @@ export function setupUI(presetNames, initialPresetName, state, actions) {
 
     el.presetTrigger.textContent = formatPresetName(initialPresetName);
 
-    setupSliders(el);
+    setupSliders(el, actions);
     setupModeToggle(el, state, actions);
 
     el.resetButton.addEventListener('click', actions.resetSimulation);
@@ -215,6 +278,16 @@ export function setupUI(presetNames, initialPresetName, state, actions) {
     el.worldSizeSelector.addEventListener('change', () => {
         actions.changeWorldSize(parseFloat(el.worldSizeSelector.value));
         el.worldSizeSelector.blur();
+    });
+
+    el.initialConditionsToggle.addEventListener('click', () => {
+        actions.cycleInitialConditions();
+        el.initialConditionsToggle.blur();
+    });
+
+    el.cohortsSelector.addEventListener('change', () => {
+        actions.onCohortsChange(parseInt(el.cohortsSelector.value));
+        el.cohortsSelector.blur();
     });
 
     const dropdown = setupDropdown(el, presetNames, state, actions);
