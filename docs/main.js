@@ -451,6 +451,19 @@ async function main() {
     }
     document.getElementById('calibration-overlay').style.display = 'none';
 
+    // ─── Controls popup ──────────────────────────────────────────────────────
+    const controlsOverlay = document.getElementById('controls-overlay');
+    const controlsButton = document.getElementById('controls-button');
+
+    function showControlsPopup() { controlsOverlay.classList.remove('hidden'); }
+    function hideControlsPopup() { controlsOverlay.classList.add('hidden'); }
+
+    controlsOverlay.addEventListener('click', hideControlsPopup);
+    controlsButton.addEventListener('click', () => { controlsButton.blur(); showControlsPopup(); });
+
+    // Show on first load
+    showControlsPopup();
+
     // Sync new controls with initially loaded config
     updateInitialConditionsDisplay(ui.el, config);
     updateMutationScaleDisplay(ui.el, config);
