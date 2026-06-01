@@ -15,6 +15,7 @@ struct ConfigData {
     float hazard_rate;
     float trail_persistence;
     float trail_diffusion;
+    float trail_advection;
 };
 uniform ConfigData config;
 
@@ -49,13 +50,25 @@ void main() {
     vec4 canvas_color;
     float TRAIL_DIFFUSION = clamp(config.trail_diffusion,0.001,1.0);
     float TRAIL_PERSISTENCE = clamp(config.trail_persistence,0.,0.999);
+
+    //Advection: canvas.xy stores the local flow (net particle current). Trace one
+    //step BACKWARD along that flow and read the trail field upstream (semi-Lagrangian
+    //advection); sampling upstream carries the field downstream, so trails drift along
+    //their own current instead of only diffusing isotropically. Backward/upwind
+    //sampling is the unconditionally stable choice. trail_advection==0 -> sample_uv==uv,
+    //i.e. the original pure-diffusion behavior.
+    vec2 sample_uv = uv;
+    if(config.trail_advection != 0.){
+        sample_uv = uv - config.trail_advection * getCan(uv, canvas_texture).xy;
+    }
+
     if(TRAIL_DIFFUSION>0){
         TRAIL_DIFFUSION= TRAIL_DIFFUSION*TRAIL_DIFFUSION;//better scaling for slider
         TRAIL_DIFFUSION = 4./(pow(5,(TRAIL_DIFFUSION))-1);//better scaling for slider
-        canvas_color = getBlur(uv, canvas_texture,TRAIL_DIFFUSION);
+        canvas_color = getBlur(sample_uv, canvas_texture,TRAIL_DIFFUSION);
     }
     else{
-        canvas_color = texture(canvas_texture,uv);
+        canvas_color = getCan(sample_uv, canvas_texture);
     }
     canvas_out = canvas_color * TRAIL_PERSISTENCE + (1 - TRAIL_PERSISTENCE) * vec4(brush_color.xy,0,1);
 }

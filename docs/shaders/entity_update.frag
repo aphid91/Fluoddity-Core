@@ -31,6 +31,7 @@ struct ConfigData {
     float hazard_rate;
     float trail_persistence;
     float trail_diffusion;
+    float trail_advection;
 };
 uniform ConfigData config;
 uniform int initial_conditions;  // 0=Grid, 1=Random, 2=Ring

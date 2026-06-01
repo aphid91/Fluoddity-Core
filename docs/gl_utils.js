@@ -105,6 +105,7 @@ export function setConfigUniforms(gl, program, config) {
     tryset(gl, program, 'config.hazard_rate', config.hazard_rate, 'float');
     tryset(gl, program, 'config.trail_persistence', config.trail_persistence, 'float');
     tryset(gl, program, 'config.trail_diffusion', config.trail_diffusion, 'float');
+    tryset(gl, program, 'config.trail_advection', config.trail_advection, 'float');
 }
 
 export function setRuleUniforms(gl, program, rule) {
@@ -135,6 +136,7 @@ export function loadConfig(data) {
         hazard_rate: physics.hazard_rate,
         trail_persistence: physics.trail_persistence,
         trail_diffusion: physics.trail_diffusion,
+        trail_advection: physics.trail_advection !== undefined ? physics.trail_advection : 0,
         rule: data.rule,
         initial_conditions: settings.initial_conditions !== undefined ? settings.initial_conditions : 0,
     };

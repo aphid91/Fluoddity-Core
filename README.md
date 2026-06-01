@@ -26,3 +26,4 @@ physics steps work like this:
 - diffusion is handled by a simple 4 neighbor weighted average of the canvas
 - trail fade is performed by mixing old trails (pre diffused) and new trails (from brush) with canvas_out = trail_persistence*canvas_in + (1-trail_persistence)*brush_in.
 - This mix() style trail persistence ensures that the equilibrium trail intensity is independent of the specific trail-persistence value
+- (Optional) `trail_advection`: when set > 0 in a config, the trail field is advected along its own stored flow. Before diffusion/fade, the canvas is sampled one step *upstream* of the flow vector in `canvas.xy` (semi-Lagrangian advection), so trails drift along their own current rather than only diffusing isotropically. `trail_advection == 0` (the default, and the value implied by every existing config) reproduces the original pure-diffusion behavior exactly.

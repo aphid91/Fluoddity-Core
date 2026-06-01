@@ -32,6 +32,7 @@ struct ConfigData {
     float hazard_rate;
     float trail_persistence;
     float trail_diffusion;
+    float trail_advection;
 };
 uniform ConfigData config;
 

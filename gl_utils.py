@@ -28,6 +28,8 @@ def load_config(path: str) -> dict:
         'hazard_rate': physics['hazard_rate'],
         'trail_persistence': physics['trail_persistence'],
         'trail_diffusion': physics['trail_diffusion'],
+        # Optional; absent in older configs -> default 0.0 (advection off).
+        'trail_advection': physics.get('trail_advection', 0.0),
         'rule': rule,
     }
 
@@ -56,6 +58,7 @@ def set_config_uniform(program: moderngl.Program, config: dict):
     tryset(program, 'config.hazard_rate', config['hazard_rate'])
     tryset(program, 'config.trail_persistence', config['trail_persistence'])
     tryset(program, 'config.trail_diffusion', config['trail_diffusion'])
+    tryset(program, 'config.trail_advection', config['trail_advection'])
 
 
 def read_shader(path: str):
