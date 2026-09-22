@@ -19,10 +19,12 @@ uniform Rule config_rule;
 //-------------Physics parameters from config file-----------------
 struct ConfigData {
     int cohorts;
+    int initial_conditions; //0=Grid, 1=Random, 2=Ring. Selects where cohorts start on a reset
     float rule_seed;
     float sensor_gain;
     float sensor_angle;
     float sensor_distance;
+    float sensor_distance_jitter; //per-particle, per-frame randomness applied to sensor_distance
     float mutation_scale;
     float global_force_mult;
     float drag;
@@ -168,15 +170,37 @@ float get_cohort(uint index) {
     return float(config.cohorts) * float(index) / float(entities.length());
 }
 
-//Return all entities to their initialization state
+//Return all entities to their initialization state.
+//config.initial_conditions picks the layout: every cohort gets its own small disk of
+//particles, and the layout decides where that disk is placed on the canvas.
 void reset(uint index){
 
     float size=index<entities.length()?.0015/SQRT_WORLD_SIZE: 0;
     float cohort_val = get_cohort(index);
+    vec2 canvas_res = vec2(textureSize(canvas_texture,0));
 
     //set pos and vel to random values on a small disk
-    vec2 pos=vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
+    vec2 pos=.019*(vec2(hash(vec2(cohort_val)),hash(vec2(cohort_val+float(index)+2.142)))-.5);
     vec2 vel=0.01*.005*(vec2(hash(vec2(cohort_val,index)),hash(vec2(cohort_val,pos.y)))*2-1);
+
+    if(config.initial_conditions==0){
+        //GRID: place the cohort disks on a grid that fills the canvas
+        float spots=float(config.cohorts);
+        float spot_rows=ceil(sqrt(spots));
+        vec2 gridcell=vec2(int(cohort_val)%int(spot_rows), int(cohort_val)/int(spot_rows));
+        float aspect=canvas_res.y/canvas_res.x;
+        pos+=vec2(1,aspect)*1.8*(gridcell/spot_rows + .5*(1./spot_rows-1.));
+    }
+    else if(config.initial_conditions==1){
+        //RANDOM: scatter the cohort disks across the whole canvas, homogenous start
+        pos=vec2(hash(vec2(cohort_val, 1.0)), hash(vec2(cohort_val, 2.0))) * 2.0 - 1.0;
+    }
+    else{
+        //RING: space the cohort disks evenly around a circle
+        float angle = cohort_val / float(config.cohorts) * 2.0 * PI;
+        float radius = 0.5*min(canvas_res.y/canvas_res.x, canvas_res.x/canvas_res.y);
+        pos += vec2(cos(angle), sin(angle)) * radius;
+    }
 
     //store to persistent entity buffer
     entities[index]=Entity(pos,vel,size,0);
@@ -256,7 +280,16 @@ void main() {
     if (frame_count==0||hazard_reset){reset(index);return;}
 
     //Calculate position offsets for the two sensors.
-    float sample_dist = 1./SQRT_WORLD_SIZE*.005 * config.sensor_distance;
+    //Jitter scales sensor_distance by a fresh random factor for every particle on every frame.
+    //It is proportional, so a jitter of 0.5 spreads the sensors over +/-50% of the set distance.
+    //Sensors that no longer agree on where to sample soften the trails the entities follow.
+    float sensor_distance = config.sensor_distance;
+    if(config.sensor_distance_jitter != 0.){
+        vec2 jitter_pos = (e.pos+1.)/2.;//hash in 0..1 coords, matching the full Fluoddity build
+        float random = hash(vec2(float(frame_count)+sensor_distance, jitter_pos.x+jitter_pos.y*1000.))*2.-1.;
+        sensor_distance += config.sensor_distance_jitter * sensor_distance * random;
+    }
+    float sample_dist = 1./SQRT_WORLD_SIZE*.005 * sensor_distance;
     vec2 orientation = safenorm(e.vel);//vector facing the same direction as velocity, with length==sample_dist
 
     vec2 left_sensor_offset = orientation*sample_dist;

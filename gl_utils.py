@@ -9,16 +9,22 @@ def load_config(path: str) -> dict:
 
     physics = data['physics']
     settings = data['settings']
+    # Per-parameter jitter. Only sensor_distance is honoured here; the full Fluoddity
+    # build can jitter every physics parameter.
+    jitters = data.get('jitters', {})
 
     # Parse rule: 80 floats -> 10 FourierCenters, each with frequency(4) + amplitude(4)
     rule = data['rule']
 
     return {
         'cohorts': settings['num_cohorts'],
+        # 0=Grid, 1=Random, 2=Ring. Configs written before this setting existed start on a grid.
+        'initial_conditions': settings.get('initial_conditions', 0),
         'rule_seed': settings['rule_seed'],
         'sensor_gain': physics['sensor_gain'],
         'sensor_angle': physics['sensor_angle'],
         'sensor_distance': physics['sensor_distance'],
+        'sensor_distance_jitter': jitters.get('SENSOR_DISTANCE', 0.0),
         'mutation_scale': physics['mutation_scale'],
         'global_force_mult': physics['global_force_mult'],
         'drag': physics['drag'],
@@ -27,7 +33,7 @@ def load_config(path: str) -> dict:
         'lateral_force': physics['lateral_force'],
         'hazard_rate': physics['hazard_rate'],
         'trail_persistence': physics['trail_persistence'],
-        'trail_diffusion': physics['trail_diffusion'],
+        'trail_diffusion': physics.get('trail_diffusion', 1.0),
         'rule': rule,
     }
 
@@ -43,10 +49,12 @@ def set_rule_uniform(program: moderngl.Program, rule: list):
 def set_config_uniform(program: moderngl.Program, config: dict):
     """Set all ConfigData struct uniforms on a program."""
     tryset(program, 'config.cohorts', config['cohorts'])
+    tryset(program, 'config.initial_conditions', config['initial_conditions'])
     tryset(program, 'config.rule_seed', config['rule_seed'])
     tryset(program, 'config.sensor_gain', config['sensor_gain'])
     tryset(program, 'config.sensor_angle', config['sensor_angle'])
     tryset(program, 'config.sensor_distance', config['sensor_distance'])
+    tryset(program, 'config.sensor_distance_jitter', config['sensor_distance_jitter'])
     tryset(program, 'config.mutation_scale', config['mutation_scale'])
     tryset(program, 'config.global_force_mult', config['global_force_mult'])
     tryset(program, 'config.drag', config['drag'])

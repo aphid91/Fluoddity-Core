@@ -1,10 +1,16 @@
 # Fluoddity-Core
 This is a stripped down version of:
 https://github.com/aphid91/Fluoddity
-Fluoddity-Core contains just enough machinery to load and run a config (no jitter or parameter sweeps). It is meant as a companion to the full Fluoddity repo for those who want to tinker and/or understand the algorithm without digging through vibe-coded bells and whistles.
+Fluoddity-Core contains just enough machinery to load and run a config (no parameter sweeps; sensor distance is the only parameter that can jitter). It is meant as a companion to the full Fluoddity repo for those who want to tinker and/or understand the algorithm without digging through vibe-coded bells and whistles.
 For more information see the Readme for Fluoddity
 
 It also hosts this claude coded webgl port of the core engine: https://aphid91.github.io/Fluoddity-Core/ This demo can be found in the docs/ folder ("docs" folder is for github pages integration)
+
+## Configs
+Configs live in `physics_configs/`. Most of them are the `physics_configs/Core` set from the full Fluoddity repo, which is the subset that only uses parameters this engine implements. Two settings are read from the config beyond the raw physics parameters:
+
+- `settings.initial_conditions` -- where each cohort starts when the simulation resets. 0=Grid (cohorts laid out on a grid filling the canvas), 1=Random (cohorts scattered across the canvas), 2=Ring (cohorts spaced evenly around a circle). Configs saved before this setting existed default to Grid.
+- `jitters.SENSOR_DISTANCE` -- proportional randomness applied to `sensor_distance` per particle, per frame. 0.0 (the default) is off; 0.5 means each sensor reading is taken somewhere within +/-50% of the configured distance. The full Fluoddity build can jitter every physics parameter; this one carries only sensor distance because it is the parameter whose jitter changes the look the most.
 
 ## Algorithm Structure
 System state consists of a particle buffer called "entities" and a texture that stores particle trails called "canvas". 
