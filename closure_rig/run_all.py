@@ -47,6 +47,8 @@ def main(argv=None):
     ap.add_argument('--fluoddity-path', default=None)
     ap.add_argument('--quick', action='store_true')
     ap.add_argument('--audit-only', action='store_true')
+    ap.add_argument('--include-excluded', action='store_true',
+                    help='also run configs listed in configs.EXCLUDED')
     ap.add_argument('--configs', nargs='*', default=None,
                     help='config names to run; default is all discovered')
     ap.add_argument('--seed', type=int, default=0)
@@ -77,6 +79,11 @@ def main(argv=None):
         return
 
     wanted = entries
+    if not args.include_excluded:
+        held = [e['name'] for e in wanted if e.get('excluded')]
+        wanted = [e for e in wanted if not e.get('excluded')]
+        for n in held:
+            print(f"  holding out {n}: {cfg_mod.EXCLUDED[n]}")
     if args.configs:
         want = set(args.configs)
         wanted = [e for e in entries if e['name'] in want]

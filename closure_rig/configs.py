@@ -26,6 +26,15 @@ CORE_SEMANTICS = {
 # initial_conditions and orientation_mix are handled separately: Core now honours
 # initial_conditions, and orientation_mix is inert when absolute_orientation == 0.
 
+# Configs held out of experiment sweeps. Their E0 results are kept; they are
+# simply not carried into E1 onward. Pass --include-excluded to override.
+EXCLUDED = {
+    'Pop': 'E0.4 warm-up floor-limited: the drift test passed on its first and '
+           'only evaluation (drift 0.071 vs noise floor 0.267), so its settling '
+           'time is unmeasured and later experiments cannot be started from a '
+           'known-settled state.',
+}
+
 SOURCES = [
     ('core', 'physics_configs/*.json'),
     ('docs', 'docs/physics_configs/*.json'),
@@ -75,6 +84,8 @@ def discover(repo_root='.', fluoddity_path=None):
                 'path': path,
                 'source': source,
                 'signature': sig,
+                'excluded': name in EXCLUDED,
+                'excluded_reason': EXCLUDED.get(name, ''),
                 'also_in': [],
                 'settings': data['settings'],
                 'physics': data['physics'],
@@ -100,6 +111,8 @@ def audit_row(entry):
     return {
         'name': entry['name'],
         'source': entry['source'],
+        'excluded': entry.get('excluded', False),
+        'excluded_reason': entry.get('excluded_reason', ''),
         'signature': entry['signature'],
         'also_in': ';'.join(entry['also_in']),
         'boundary_conditions': s.get('boundary_conditions', ''),
