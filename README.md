@@ -7,7 +7,7 @@ For more information see the Readme for Fluoddity
 It also hosts this claude coded webgl port of the core engine: https://aphid91.github.io/Fluoddity-Core/ This demo can be found in the docs/ folder ("docs" folder is for github pages integration)
 
 ## Controls
-- `R` -- reset the simulation. Particles return to their starting positions; the existing trails are left to fade on their own rather than being wiped, same as the web port.
+- `R` -- reset the simulation. Particles return to their starting positions and the canvas is wiped: `canvas.frag` clears to `(0,0,0,1)` whenever `frame_count == 0`.
 - `Left` / `Right` -- step backwards/forwards through the configs in `physics_configs/`, wrapping at either end. The running config's name goes in the window title.
 
 ## Configs
