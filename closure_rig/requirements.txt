@@ -1,0 +1,6 @@
+# The rig reuses Fluoddity-Core's own requirements (moderngl, numpy) and adds
+# analysis/plotting on top.
+numpy
+scipy
+matplotlib
+scikit-learn
