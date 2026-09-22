@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "config_path": "./physics_configs/LavaLamp.json",
+    "config_name": "LavaLamp",
+    "config_md5": "e4a2f8a2544e",
+    "git_commit": "34db2e04664979dfe920890fa703fdcc1550a28e",
+    "timestamp": "2026-09-22T05:44:35",
+    "gpu": {
+      "GL_RENDERER": "llvmpipe (LLVM 20.1.2, 256 bits)",
+      "GL_VERSION": "4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.2",
+      "GL_VENDOR": "Mesa",
+      "software_rendered": true
+    },
+    "throughput_is_comparable": false,
+    "seed": 0,
+    "quick": false,
+    "particles": 150000,
+    "canvas_dim": 512,
+    "particles_per_pixel": 0.57220458984375,
+    "persistence_used": 0.9380000233650208,
+    "memory_time_steps": 16.129038336376055,
+    "px_per_world_unit": 256.0
+  },
+  "E0.1_throughput": {
+    "steps_per_sec": 7.718183508099197,
+    "steps_measured": 50,
+    "particles": 150000,
+    "canvas_dim": 512,
+    "particles_per_pixel": 0.57220458984375
+  },
+  "E0.2_blend": {
+    "single_particle": {
+      "sum_xy": [
+        0.00019720087584573776,
+        -9.860043792286888e-05
+      ],
+      "sum_z": 0.0004930021241307259,
+      "sum_w": 0.049300216138362885,
+      "recovered_vel": [
+        0.004000000189989805,
+        -0.0020000000949949026
+      ],
+      "true_vel": [
+        0.004000000189989805,
+        -0.0020000000949949026
+      ],
+      "vel_recovered_exactly": true,
+      "z_over_w": 0.009999998845160007,
+      "footprint_pixels": 4
+    },
+    "subpixel": {
+      "n_probes": 64,
+      "mean_kernel_sq": 6.13539442315232,
+      "std_kernel_sq": 7.572256486118741,
+      "cv_percent": 123.4192288851769,
+      "min_over_max": 0.0015650083704147537,
+      "local_sums_match_global": true
+    },
+    "interpretation": "brush.xy = sum(vel * k^2); brush.w = sum(k^2); brush.z = sum(0.01 * k^2). Mean deposited velocity m = brush.xy / brush.w is exact. brush.w is proportional to particle count only up to the sub-pixel spread reported above."
+  },
+  "E0.3_propagator": {
+    "persistence_used": 0.9380000233650208,
+    "trail_diffusion": 1.0,
+    "K": 1.0,
+    "channels_compared": "xy only (canvas.frag forces z=0, w=1)",
+    "results": [
+      {
+        "k": 1,
+        "rel_l2_error": 6.309259047379597e-08,
+        "max_abs_error": 3.3084544236172686e-09,
+        "field_rms": 0.004199828899384209
+      },
+      {
+        "k": 10,
+        "rel_l2_error": 9.148956631022446e-08,
+        "max_abs_error": 1.227327634488462e-09,
+        "field_rms": 0.0011121644761128082
+      },
+      {
+        "k": 100,
+        "rel_l2_error": 1.5561073347059341e-07,
+        "max_abs_error": 1.7631514481926402e-09,
+        "field_rms": 0.0017270339274814968
+      },
+      {
+        "k": 1000,
+        "rel_l2_error": 7.695019836204671e-07,
+        "max_abs_error": 3.079809187192528e-09,
+        "field_rms": 0.0017298450225687928
+      }
+    ],
+    "max_rel_error": 7.695019836204671e-07
+  }
+}
