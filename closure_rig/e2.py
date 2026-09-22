@@ -176,14 +176,39 @@ def run(rig, n_snapshots=3, steps_between=1500, t_max=2000, n_probes=14,
                 t_conv = r['T']; break
         res['T_conv'] = t_conv
         res['T_conv_in_memory_times'] = (t_conv / rig.memory_time) if t_conv else None
+
+        # The split-half curve is U-shaped: averaging beats down noise until
+        # drift under the frozen field overtakes it. The minimum is the best
+        # this config can do, and the T where it occurs is the window a reduced
+        # model would have to use. Both are recorded even when the curve never
+        # reaches `tol`, because "T_conv=None" alone cannot distinguish a curve
+        # that bottoms out at 6% from one that never improves at all.
+        pts = [(r['split_half_diff'], r['T']) for r in res['convergence']
+               if r['split_half_diff'] is not None]
+        best_val, best_T = min(pts) if pts else (None, None)
+        res['split_half_min'] = best_val
+        res['T_opt'] = best_T
+        res['T_opt_in_memory_times'] = (best_T / rig.memory_time) if best_T else None
+        res['density_corr_at_T_opt'] = next(
+            (d['density_corr_to_freeze'] for d in res['density_drift']
+             if best_T and d['T'] >= best_T), None)
         # A usable frozen window needs m converged while rho is still faithful.
         last_corr = res['density_drift'][-1]['density_corr_to_freeze'] if res['density_drift'] else None
         corr_at_conv = next((d['density_corr_to_freeze'] for d in res['density_drift']
                              if t_conv and d['T'] >= t_conv), None)
         res['density_corr_at_T_conv'] = corr_at_conv
         res['density_corr_at_T_max'] = last_corr
+        # A usable window needs the deposit actually determined AND the density
+        # still faithful to freeze time. Failing either kills it, so record which.
+        density_ok = res['density_corr_at_T_opt'] is None or res['density_corr_at_T_opt'] > 0.9
         res['usable_window_exists'] = bool(t_conv is not None and corr_at_conv is not None
                                            and corr_at_conv > 0.9)
+        res['usable_window_blocked_by'] = (
+            None if res['usable_window_exists'] else
+            ('deposit never converged (split-half floor %.3f > tol %.3f)' % (best_val, tol)
+             if best_val is not None and best_val >= tol else
+             'density drifted before the deposit converged'
+             if not density_ok else 'unknown'))
         res['snapshot_index'] = i
         out.append((res, fields))
         rig.restore(snap)                # undo the frozen excursion

@@ -2093,7 +2093,12 @@
       "density_corr_at_T_conv": null,
       "density_corr_at_T_max": 0.5963454464327084,
       "usable_window_exists": false,
-      "snapshot_index": 0
+      "snapshot_index": 0,
+      "split_half_min": 0.2172194882996667,
+      "T_opt": 256,
+      "T_opt_in_memory_times": 15.871994018554688,
+      "density_corr_at_T_opt": 0.9186870103477097,
+      "usable_window_blocked_by": "deposit never converged (split-half floor 0.217 > tol 0.050)"
     },
     {
       "T_max": 4096,
@@ -2214,7 +2219,12 @@
       "density_corr_at_T_conv": null,
       "density_corr_at_T_max": 0.7071057281152582,
       "usable_window_exists": false,
-      "snapshot_index": 1
+      "snapshot_index": 1,
+      "split_half_min": 0.21471488996059435,
+      "T_opt": 256,
+      "T_opt_in_memory_times": 15.871994018554688,
+      "density_corr_at_T_opt": 0.9189011738370276,
+      "usable_window_blocked_by": "deposit never converged (split-half floor 0.215 > tol 0.050)"
     },
     {
       "T_max": 4096,
@@ -2335,7 +2345,12 @@
       "density_corr_at_T_conv": null,
       "density_corr_at_T_max": 0.6742368093311177,
       "usable_window_exists": false,
-      "snapshot_index": 2
+      "snapshot_index": 2,
+      "split_half_min": 0.21003029475599516,
+      "T_opt": 256,
+      "T_opt_in_memory_times": 15.871994018554688,
+      "density_corr_at_T_opt": 0.9319302804886281,
+      "usable_window_blocked_by": "deposit never converged (split-half floor 0.210 > tol 0.050)"
     }
   ]
 }
