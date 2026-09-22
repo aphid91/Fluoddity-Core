@@ -247,8 +247,20 @@ def warmup(rig, cap=30000, probe_every=100, window=20, n_bands=16):
             settled_at = steps - half * probe_every
             break
 
+    # Firing on the very first evaluation means drift was already under the
+    # noise floor as soon as the window filled. That is not a measurement of
+    # when the canvas settled -- it only says no drift was detectable above
+    # this config's fluctuation level, and the reported step is the earliest
+    # value the window can credit. Such a result needs a longer window or a
+    # probe interval scaled to the config's memory time before it means
+    # anything, so it is flagged rather than reported as a settling time.
+    n_evals = sum(1 for t in trace if t.get('drift') is not None)
+    floor_limited = bool(settled_at is not None and n_evals <= 1)
+
     return {
-        'settled': settled_at is not None,
+        'settled': settled_at is not None and not floor_limited,
+        'floor_limited': floor_limited,
+        'evaluations_before_firing': n_evals,
         'warmup_steps': settled_at if settled_at is not None else steps,
         'steps_run': steps,
         'cap': cap,
