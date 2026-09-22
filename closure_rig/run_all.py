@@ -51,8 +51,9 @@ def main(argv=None):
                     help='config names to run; default is all discovered')
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--warmup-cap', type=int, default=30000)
-    ap.add_argument('--probe-every', type=int, default=250)
-    ap.add_argument('--warmup-tol', type=float, default=0.02)
+    ap.add_argument('--probe-every', type=int, default=100)
+    ap.add_argument('--warmup-window', type=int, default=20,
+                    help='probes in the trailing split-half drift window')
     ap.add_argument('--skip-warmup', action='store_true')
     args = ap.parse_args(argv)
 
@@ -105,7 +106,7 @@ def main(argv=None):
             rig = Rig(e['path'], ctx=ctx)
             sub = argparse.Namespace(
                 seed=args.seed, quick=args.quick, warmup_cap=args.warmup_cap,
-                probe_every=args.probe_every, warmup_tol=args.warmup_tol,
+                probe_every=args.probe_every, warmup_window=args.warmup_window,
                 skip_warmup=args.skip_warmup,
             )
             if args.quick:

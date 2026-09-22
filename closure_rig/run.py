@@ -104,7 +104,7 @@ def run_e0(rig, args, ctx, blend=True):
     if not args.skip_warmup:
         print(f'  E0.4 warm-up (cap {args.warmup_cap}) ...', flush=True)
         res['E0.4_warmup'] = e0_mod.warmup(
-            rig, cap=args.warmup_cap, probe_every=args.probe_every, tol=args.warmup_tol
+            rig, cap=args.warmup_cap, probe_every=args.probe_every, window=args.warmup_window
         )
         w = res['E0.4_warmup']
         print(f"       {'settled at' if w['settled'] else 'CAP HIT at'} "
@@ -119,8 +119,9 @@ def main(argv=None):
     ap.add_argument('--seed', type=int, default=0)
     ap.add_argument('--quick', action='store_true', help='short runs for smoke testing')
     ap.add_argument('--warmup-cap', type=int, default=30000)
-    ap.add_argument('--probe-every', type=int, default=250)
-    ap.add_argument('--warmup-tol', type=float, default=0.02)
+    ap.add_argument('--probe-every', type=int, default=100)
+    ap.add_argument('--warmup-window', type=int, default=20,
+                    help='probes in the trailing split-half drift window')
     ap.add_argument('--skip-warmup', action='store_true')
     args = ap.parse_args(argv)
 

@@ -190,39 +190,62 @@ def propagator_test(rig, ks=(1, 10, 100, 1000), seed=0):
 
 
 # ---------------------------------------------------------------- E0.4
-def warmup(rig, cap=30000, probe_every=250, tol=0.02, patience=4, n_bands=16):
-    """Run from reset until the canvas's radial power spectrum stops moving.
+def warmup(rig, cap=30000, probe_every=100, window=20, n_bands=16):
+    """Run from reset until the canvas's radial power spectrum stops drifting.
 
-    The statistic is deliberately translation-invariant: we care that the
-    pattern has reached its characteristic scales, not where the filaments are.
+    The statistic is translation-invariant on purpose: what matters is that the
+    pattern has reached its characteristic scales, not where the filaments sit.
 
-    Returns the step count at which it settled, or the cap with settled=False.
-    A config that never settles is reported as such rather than having the
-    threshold tuned until it passes.
+    Settling is decided by a split-half drift test over a trailing window of
+    spectra, not by comparing consecutive probes. Consecutive probes differ
+    mostly by fluctuation -- in a stationary state that difference has a noise
+    floor well above any fixed tolerance one would pick, so a consecutive-probe
+    test never fires no matter how settled the system is. Instead the window is
+    split in half and the systematic change between halves is compared against
+    the probe-to-probe scatter within them, so the threshold calibrates itself
+    to however noisy the config happens to be. This is the same first-half /
+    second-half separation of drift from noise that E2 uses.
+
+    Returns the step at which drift fell to the noise level, or the cap with
+    settled=False. A config that genuinely never settles is reported as such
+    rather than having the threshold loosened until it passes.
     """
     rig.reset()
     rig.step(1)                            # step 1 wipes the canvas and places particles
 
-    trace, prev, stable, settled_at = [], None, 0, None
+    specs, trace, settled_at = [], [], None
     steps = 0
+    half = window // 2
     t0 = time.perf_counter()
     while steps < cap:
         rig.step(probe_every)
         steps += probe_every
         spec, _ = prop.radial_power_spectrum(rig.read_canvas()[..., :2], n_bands=n_bands)
-        total = spec.sum()
-        if prev is not None:
-            # L1 distance between successive spectra, normalised by total power:
-            # a scale-free "how much did the pattern change" number.
-            d = float(np.abs(spec - prev).sum() / max(total, 1e-30))
-            trace.append({'step': steps, 'delta': d, 'total_power': float(total)})
-            stable = stable + 1 if d < tol else 0
-            if stable >= patience and settled_at is None:
-                settled_at = steps - (patience - 1) * probe_every
-                break
-        else:
-            trace.append({'step': steps, 'delta': None, 'total_power': float(total)})
-        prev = spec
+        specs.append(spec)
+        if len(specs) > window:
+            specs.pop(0)
+
+        if len(specs) < window:
+            trace.append({'step': steps, 'drift': None, 'noise': None,
+                          'total_power': float(spec.sum())})
+            continue
+
+        arr = np.array(specs)
+        m1, m2 = arr[:half].mean(axis=0), arr[half:].mean(axis=0)
+        total = max(arr.mean(axis=0).sum(), 1e-30)
+        # Systematic change between the two halves of the window.
+        drift = float(np.abs(m1 - m2).sum() / total)
+        # Scatter of a half-window mean, from the spread inside each half. The
+        # difference of two independent half-means carries sqrt(2) times that.
+        se = (np.abs(arr[:half] - m1).sum(axis=1).mean()
+              + np.abs(arr[half:] - m2).sum(axis=1).mean()) / (2.0 * total * np.sqrt(half))
+        noise = float(np.sqrt(2.0) * se)
+        trace.append({'step': steps, 'drift': drift, 'noise': noise,
+                      'total_power': float(arr.mean(axis=0).sum())})
+        if drift <= noise:
+            # The window is centred on the transition, so credit the midpoint.
+            settled_at = steps - half * probe_every
+            break
 
     return {
         'settled': settled_at is not None,
@@ -230,10 +253,12 @@ def warmup(rig, cap=30000, probe_every=250, tol=0.02, patience=4, n_bands=16):
         'steps_run': steps,
         'cap': cap,
         'probe_every': probe_every,
-        'tol': tol,
-        'patience': patience,
+        'window_probes': window,
+        'criterion': 'split-half spectral drift <= sqrt(2) * within-window scatter',
         'memory_time_steps': rig.memory_time,
         'warmup_in_memory_times': (settled_at or steps) / rig.memory_time,
+        'final_drift': trace[-1]['drift'] if trace and trace[-1]['drift'] is not None else None,
+        'final_noise': trace[-1]['noise'] if trace and trace[-1]['noise'] is not None else None,
         'wall_seconds': time.perf_counter() - t0,
         'trace': trace,
     }
