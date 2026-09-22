@@ -279,6 +279,8 @@
         "noise": 0.029538426032233996,
         "total_power": 4777.594469850483
       }
-    ]
+    ],
+    "evaluations_before_firing": 15,
+    "floor_limited": false
   }
 }

@@ -3,8 +3,8 @@
     "config_path": "./physics_configs/SideWinder.json",
     "config_name": "SideWinder",
     "config_md5": "bba9295d918b",
-    "git_commit": "34db2e04664979dfe920890fa703fdcc1550a28e",
-    "timestamp": "2026-09-22T05:45:41",
+    "git_commit": "a085c66135d9636c0346dcc88188300679dfbeb5",
+    "timestamp": "2026-09-22T06:18:15",
     "gpu": {
       "GL_RENDERER": "llvmpipe (LLVM 20.1.2, 256 bits)",
       "GL_VERSION": "4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.2",
@@ -22,41 +22,11 @@
     "px_per_world_unit": 256.0
   },
   "E0.1_throughput": {
-    "steps_per_sec": 10.343529769973186,
+    "steps_per_sec": 10.397308061749209,
     "steps_measured": 50,
     "particles": 150000,
     "canvas_dim": 512,
     "particles_per_pixel": 0.57220458984375
-  },
-  "E0.2_blend": {
-    "single_particle": {
-      "sum_xy": [
-        0.00019720087584573776,
-        -9.860043792286888e-05
-      ],
-      "sum_z": 0.0004930021241307259,
-      "sum_w": 0.049300216138362885,
-      "recovered_vel": [
-        0.004000000189989805,
-        -0.0020000000949949026
-      ],
-      "true_vel": [
-        0.004000000189989805,
-        -0.0020000000949949026
-      ],
-      "vel_recovered_exactly": true,
-      "z_over_w": 0.009999998845160007,
-      "footprint_pixels": 4
-    },
-    "subpixel": {
-      "n_probes": 64,
-      "mean_kernel_sq": 6.13539442315232,
-      "std_kernel_sq": 7.572256486118741,
-      "cv_percent": 123.4192288851769,
-      "min_over_max": 0.0015650083704147537,
-      "local_sums_match_global": true
-    },
-    "interpretation": "brush.xy = sum(vel * k^2); brush.w = sum(k^2); brush.z = sum(0.01 * k^2). Mean deposited velocity m = brush.xy / brush.w is exact. brush.w is proportional to particle count only up to the sub-pixel spread reported above."
   },
   "E0.3_propagator": {
     "persistence_used": 0.9810000061988831,
@@ -90,5 +60,233 @@
       }
     ],
     "max_rel_error": 2.8069599917370815e-06
+  },
+  "E0.4_warmup": {
+    "settled": true,
+    "warmup_steps": 2500,
+    "steps_run": 3500,
+    "cap": 8000,
+    "probe_every": 100,
+    "window_probes": 20,
+    "criterion": "split-half spectral drift <= sqrt(2) * within-window scatter",
+    "memory_time_steps": 52.63159611879523,
+    "warmup_in_memory_times": 47.49998450279236,
+    "final_drift": 0.019216266990245236,
+    "final_noise": 0.04147356631102852,
+    "wall_seconds": 362.2077213450002,
+    "trace": [
+      {
+        "step": 100,
+        "drift": null,
+        "noise": null,
+        "total_power": 1838.0392466349633
+      },
+      {
+        "step": 200,
+        "drift": null,
+        "noise": null,
+        "total_power": 1974.3217095160196
+      },
+      {
+        "step": 300,
+        "drift": null,
+        "noise": null,
+        "total_power": 1707.7679373604633
+      },
+      {
+        "step": 400,
+        "drift": null,
+        "noise": null,
+        "total_power": 1448.2295997765941
+      },
+      {
+        "step": 500,
+        "drift": null,
+        "noise": null,
+        "total_power": 1335.2758803722706
+      },
+      {
+        "step": 600,
+        "drift": null,
+        "noise": null,
+        "total_power": 1234.1304243561697
+      },
+      {
+        "step": 700,
+        "drift": null,
+        "noise": null,
+        "total_power": 1052.2165238526572
+      },
+      {
+        "step": 800,
+        "drift": null,
+        "noise": null,
+        "total_power": 1072.3344964098385
+      },
+      {
+        "step": 900,
+        "drift": null,
+        "noise": null,
+        "total_power": 1061.164810087637
+      },
+      {
+        "step": 1000,
+        "drift": null,
+        "noise": null,
+        "total_power": 1063.3337449472065
+      },
+      {
+        "step": 1100,
+        "drift": null,
+        "noise": null,
+        "total_power": 1098.7099602350343
+      },
+      {
+        "step": 1200,
+        "drift": null,
+        "noise": null,
+        "total_power": 1158.2812367081306
+      },
+      {
+        "step": 1300,
+        "drift": null,
+        "noise": null,
+        "total_power": 1160.023711106971
+      },
+      {
+        "step": 1400,
+        "drift": null,
+        "noise": null,
+        "total_power": 1148.1529952036635
+      },
+      {
+        "step": 1500,
+        "drift": null,
+        "noise": null,
+        "total_power": 1076.9570939865473
+      },
+      {
+        "step": 1600,
+        "drift": null,
+        "noise": null,
+        "total_power": 996.9801081595815
+      },
+      {
+        "step": 1700,
+        "drift": null,
+        "noise": null,
+        "total_power": 1027.5154064029568
+      },
+      {
+        "step": 1800,
+        "drift": null,
+        "noise": null,
+        "total_power": 1028.9255669134009
+      },
+      {
+        "step": 1900,
+        "drift": null,
+        "noise": null,
+        "total_power": 1045.802777557256
+      },
+      {
+        "step": 2000,
+        "drift": 0.24887524257692933,
+        "noise": 0.06323655601782158,
+        "total_power": 1226.108038281033
+      },
+      {
+        "step": 2100,
+        "drift": 0.20776728781668813,
+        "noise": 0.0589266007271446,
+        "total_power": 1181.9631367685136
+      },
+      {
+        "step": 2200,
+        "drift": 0.17219765703967413,
+        "noise": 0.04661457054277832,
+        "total_power": 1126.1815493140093
+      },
+      {
+        "step": 2300,
+        "drift": 0.16051292192533143,
+        "noise": 0.036766152598858105,
+        "total_power": 1081.5672768520756
+      },
+      {
+        "step": 2400,
+        "drift": 0.1738579786200598,
+        "noise": 0.033937388016110015,
+        "total_power": 1047.3199165021601
+      },
+      {
+        "step": 2500,
+        "drift": 0.1819706720953364,
+        "noise": 0.0326439295107438,
+        "total_power": 1019.748353098649
+      },
+      {
+        "step": 2600,
+        "drift": 0.17974601807577834,
+        "noise": 0.03275957826310124,
+        "total_power": 999.0296658790588
+      },
+      {
+        "step": 2700,
+        "drift": 0.18828340921385864,
+        "noise": 0.0314363863329147,
+        "total_power": 992.8744620104092
+      },
+      {
+        "step": 2800,
+        "drift": 0.19252127118198645,
+        "noise": 0.031073377981729804,
+        "total_power": 986.9956361169579
+      },
+      {
+        "step": 2900,
+        "drift": 0.18799692693391346,
+        "noise": 0.03186483674015081,
+        "total_power": 987.6323378901249
+      },
+      {
+        "step": 3000,
+        "drift": 0.19184162660704487,
+        "noise": 0.03105506359810591,
+        "total_power": 979.5731828421455
+      },
+      {
+        "step": 3100,
+        "drift": 0.1976680268247485,
+        "noise": 0.03291136283168264,
+        "total_power": 963.9106106266347
+      },
+      {
+        "step": 3200,
+        "drift": 0.16808498083811454,
+        "noise": 0.03471827666761964,
+        "total_power": 949.4264720375984
+      },
+      {
+        "step": 3300,
+        "drift": 0.11324543921031355,
+        "noise": 0.0383622750563953,
+        "total_power": 941.4566774511796
+      },
+      {
+        "step": 3400,
+        "drift": 0.04632625229834737,
+        "noise": 0.0412449802806074,
+        "total_power": 934.6285359945043
+      },
+      {
+        "step": 3500,
+        "drift": 0.019216266990245236,
+        "noise": 0.04147356631102852,
+        "total_power": 930.2955300808958
+      }
+    ],
+    "evaluations_before_firing": 16,
+    "floor_limited": false
   }
 }

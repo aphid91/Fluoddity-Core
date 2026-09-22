@@ -96,17 +96,34 @@ def main(argv=None):
              f"{worst[1]['E0.3_propagator']['max_rel_error']:.2e}\n")
     L.append(f"- Best config: **{best[0]}**, {best[1]['E0.3_propagator']['max_rel_error']:.2e}\n")
 
+    warm = {n: r['E0.4_warmup'] for n, r in runs.items() if 'E0.4_warmup' in r}
+    if warm:
+        L.append('\n## E0.4 Warm-up\n')
+        L.append('| config | memory time | warm-up steps | in memory times | evals | verdict |')
+        L.append('|---|---|---|---|---|---|')
+        for n, w in sorted(warm.items(), key=lambda kv: kv[1]['memory_time_steps']):
+            verdict = ('**floor-limited**' if w.get('floor_limited')
+                       else ('settled' if w['settled'] else '**cap hit**'))
+            L.append(f"| {n} | {w['memory_time_steps']:.1f} | {w['warmup_steps']} | "
+                     f"{w['warmup_in_memory_times']:.0f} | "
+                     f"{w.get('evaluations_before_firing', '-')} | {verdict} |")
+        L.append('\nFloor-limited means the drift test passed on its first evaluation, '
+                 'so the figure is the earliest step the window can credit rather than a '
+                 'measured settling time.\n')
+
     L.append('\n## Per-config table\n')
-    L.append('| config | particles/px | memory time (steps) | steps/sec | propagator max rel err | warm-up | settled |')
-    L.append('|---|---|---|---|---|---|---|')
+    L.append('| config | particles/px | memory time (steps) | steps/sec | propagator max rel err | warm-up |')
+    L.append('|---|---|---|---|---|---|')
     for name, r in sorted(runs.items()):
         w = r.get('E0.4_warmup')
+        wcol = '-'
+        if w:
+            wcol = (f"{w['warmup_steps']} (floor-limited)" if w.get('floor_limited')
+                    else (str(w['warmup_steps']) if w['settled'] else 'cap hit'))
         L.append(f"| {name} | {r['meta']['particles_per_pixel']:.2f} | "
                  f"{r['meta']['memory_time_steps']:.1f} | "
                  f"{r['E0.1_throughput']['steps_per_sec']:.1f} | "
-                 f"{r['E0.3_propagator']['max_rel_error']:.1e} | "
-                 f"{w['warmup_steps'] if w else '-'} | "
-                 f"{('yes' if w['settled'] else 'CAP HIT') if w else '-'} |")
+                 f"{r['E0.3_propagator']['max_rel_error']:.1e} | {wcol} |")
 
     path = os.path.join(args.out, 'E0_REPORT.md')
     open(path, 'w').write('\n'.join(L) + '\n')

@@ -62,7 +62,7 @@
     "max_rel_error": 9.899188975957882e-07
   },
   "E0.4_warmup": {
-    "settled": true,
+    "settled": false,
     "warmup_steps": 1000,
     "steps_run": 2000,
     "cap": 8000,
@@ -195,6 +195,8 @@
         "noise": 0.2674368049786508,
         "total_power": 2783.914290080597
       }
-    ]
+    ],
+    "evaluations_before_firing": 1,
+    "floor_limited": true
   }
 }
