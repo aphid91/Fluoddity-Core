@@ -1,6 +1,4 @@
 {
-  "quad_px": 1.536,
-  "sigma_px": 0.25036800000000003,
   "single_particle": {
     "sum_xy": [
       0.00019720087584573776,
@@ -20,21 +18,13 @@
     "z_over_w": 0.009999998845160007,
     "footprint_pixels": 4
   },
-  "subpixel_sweep": {
-    "grid": 16,
-    "n_probes": 256,
-    "windows_captured_all": true,
-    "min_kernel_sq": 0.04930021986365318,
-    "median_kernel_sq": 3.022188186645508,
-    "mean_kernel_sq": 7.065871238708496,
-    "max_kernel_sq": 35.883079528808594,
-    "max_over_min": 727.8482666015625,
-    "cv_percent": 124.20475482940674,
-    "min_pixels_touched": 1,
-    "max_pixels_touched": 4,
-    "max_vel_deviation": 4.656612873077393e-10,
-    "variance_inflation": 2.5426821122233036,
-    "effective_sample_fraction": 0.3932854977005391
+  "subpixel": {
+    "n_probes": 64,
+    "mean_kernel_sq": 6.13539442315232,
+    "std_kernel_sq": 7.572256486118741,
+    "cv_percent": 123.4192288851769,
+    "min_over_max": 0.0015650083704147537,
+    "local_sums_match_global": true
   },
-  "interpretation": "brush.xy = sum(vel*k^2); brush.w = sum(k^2); brush.z = sum(0.01*k^2). m = brush.xy/brush.w is exact. brush.w is proportional to particle count only up to the sub-pixel aliasing reported above, so a density estimate from it carries variance_inflation times the variance of a true count. Config-independent."
+  "interpretation": "brush.xy = sum(vel * k^2); brush.w = sum(k^2); brush.z = sum(0.01 * k^2). Mean deposited velocity m = brush.xy / brush.w is exact. brush.w is proportional to particle count only up to the sub-pixel spread reported above."
 }
