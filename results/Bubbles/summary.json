@@ -3,8 +3,8 @@
     "config_path": "./physics_configs/Bubbles.json",
     "config_name": "Bubbles",
     "config_md5": "d415eec06250",
-    "git_commit": "f6b27d80842a9fcb34240e6c0cef97aa3a38e63b",
-    "timestamp": "2026-09-22T05:48:15",
+    "git_commit": "2f36b6d52073b20199f8bfb1f768b0a3a3d684c9",
+    "timestamp": "2026-09-22T06:03:28",
     "gpu": {
       "GL_RENDERER": "llvmpipe (LLVM 20.1.2, 256 bits)",
       "GL_VERSION": "4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.2",
@@ -22,41 +22,11 @@
     "px_per_world_unit": 256.0
   },
   "E0.1_throughput": {
-    "steps_per_sec": 9.492170418446376,
+    "steps_per_sec": 9.638138191161458,
     "steps_measured": 50,
     "particles": 150000,
     "canvas_dim": 512,
     "particles_per_pixel": 0.57220458984375
-  },
-  "E0.2_blend": {
-    "single_particle": {
-      "sum_xy": [
-        0.00019720087584573776,
-        -9.860043792286888e-05
-      ],
-      "sum_z": 0.0004930021241307259,
-      "sum_w": 0.049300216138362885,
-      "recovered_vel": [
-        0.004000000189989805,
-        -0.0020000000949949026
-      ],
-      "true_vel": [
-        0.004000000189989805,
-        -0.0020000000949949026
-      ],
-      "vel_recovered_exactly": true,
-      "z_over_w": 0.009999998845160007,
-      "footprint_pixels": 4
-    },
-    "subpixel": {
-      "n_probes": 64,
-      "mean_kernel_sq": 6.13539442315232,
-      "std_kernel_sq": 7.572256486118741,
-      "cv_percent": 123.4192288851769,
-      "min_over_max": 0.0015650083704147537,
-      "local_sums_match_global": true
-    },
-    "interpretation": "brush.xy = sum(vel * k^2); brush.w = sum(k^2); brush.z = sum(0.01 * k^2). Mean deposited velocity m = brush.xy / brush.w is exact. brush.w is proportional to particle count only up to the sub-pixel spread reported above."
   },
   "E0.3_propagator": {
     "persistence_used": 0.9430000185966492,
@@ -92,176 +62,222 @@
     "max_rel_error": 8.953946228988156e-07
   },
   "E0.4_warmup": {
-    "settled": false,
-    "warmup_steps": 8000,
-    "steps_run": 8000,
+    "settled": true,
+    "warmup_steps": 2400,
+    "steps_run": 3400,
     "cap": 8000,
-    "probe_every": 250,
-    "tol": 0.02,
-    "patience": 4,
+    "probe_every": 100,
+    "window_probes": 20,
+    "criterion": "split-half spectral drift <= sqrt(2) * within-window scatter",
     "memory_time_steps": 17.543865372931744,
-    "warmup_in_memory_times": 455.99985122680664,
-    "wall_seconds": 812.2428307839999,
+    "warmup_in_memory_times": 136.799955368042,
+    "final_drift": 0.008924402616604902,
+    "final_noise": 0.029538426032233996,
+    "wall_seconds": 340.14381305300026,
     "trace": [
       {
-        "step": 250,
-        "delta": null,
-        "total_power": 5396.741675647449
+        "step": 100,
+        "drift": null,
+        "noise": null,
+        "total_power": 4819.521393484258
+      },
+      {
+        "step": 200,
+        "drift": null,
+        "noise": null,
+        "total_power": 5408.265821248064
+      },
+      {
+        "step": 300,
+        "drift": null,
+        "noise": null,
+        "total_power": 5277.2953777313705
+      },
+      {
+        "step": 400,
+        "drift": null,
+        "noise": null,
+        "total_power": 5873.73372992024
       },
       {
         "step": 500,
-        "delta": 0.1387394168158491,
+        "drift": null,
+        "noise": null,
         "total_power": 5995.10192520992
       },
       {
-        "step": 750,
-        "delta": 0.10475294226689041,
-        "total_power": 5426.714271075465
+        "step": 600,
+        "drift": null,
+        "noise": null,
+        "total_power": 5736.023192778385
+      },
+      {
+        "step": 700,
+        "drift": null,
+        "noise": null,
+        "total_power": 5316.0643175700725
+      },
+      {
+        "step": 800,
+        "drift": null,
+        "noise": null,
+        "total_power": 5271.2285531763255
+      },
+      {
+        "step": 900,
+        "drift": null,
+        "noise": null,
+        "total_power": 5045.439709658771
       },
       {
         "step": 1000,
-        "delta": 0.04834492120004289,
+        "drift": null,
+        "noise": null,
         "total_power": 5594.007321987127
       },
       {
-        "step": 1250,
-        "delta": 0.036614578082652435,
-        "total_power": 5769.738490571748
+        "step": 1100,
+        "drift": null,
+        "noise": null,
+        "total_power": 5684.783305362657
+      },
+      {
+        "step": 1200,
+        "drift": null,
+        "noise": null,
+        "total_power": 6032.505635785465
+      },
+      {
+        "step": 1300,
+        "drift": null,
+        "noise": null,
+        "total_power": 5829.701419009137
+      },
+      {
+        "step": 1400,
+        "drift": null,
+        "noise": null,
+        "total_power": 5482.637887794487
       },
       {
         "step": 1500,
-        "delta": 0.11661464260742224,
+        "drift": null,
+        "noise": null,
         "total_power": 5169.514243427838
       },
       {
-        "step": 1750,
-        "delta": 0.02008705973039362,
-        "total_power": 5067.72356654486
+        "step": 1600,
+        "drift": null,
+        "noise": null,
+        "total_power": 5243.625132153712
+      },
+      {
+        "step": 1700,
+        "drift": null,
+        "noise": null,
+        "total_power": 5085.809769962431
+      },
+      {
+        "step": 1800,
+        "drift": null,
+        "noise": null,
+        "total_power": 5338.271237121955
+      },
+      {
+        "step": 1900,
+        "drift": null,
+        "noise": null,
+        "total_power": 4665.533874465153
       },
       {
         "step": 2000,
-        "delta": 0.08405542318487805,
-        "total_power": 4691.081842881947
+        "drift": 0.0380338706184102,
+        "noise": 0.032944026371866164,
+        "total_power": 5378.007284536466
       },
       {
-        "step": 2250,
-        "delta": 0.1297039668874428,
-        "total_power": 4153.999956147133
+        "step": 2100,
+        "drift": 0.05430543633049737,
+        "noise": 0.03030218029923806,
+        "total_power": 5374.268332098404
+      },
+      {
+        "step": 2200,
+        "drift": 0.09691198653170145,
+        "noise": 0.029921305239327414,
+        "total_power": 5324.609084954206
+      },
+      {
+        "step": 2300,
+        "drift": 0.13849987548582002,
+        "noise": 0.028175555096894355,
+        "total_power": 5272.72316044911
+      },
+      {
+        "step": 2400,
+        "drift": 0.15386537687708696,
+        "noise": 0.026902722930058298,
+        "total_power": 5198.7922615209345
       },
       {
         "step": 2500,
-        "delta": 0.018300174984260918,
-        "total_power": 4202.89356331999
+        "drift": 0.15932441933036837,
+        "noise": 0.027170061157248886,
+        "total_power": 5109.181843426437
       },
       {
-        "step": 2750,
-        "delta": 0.021205590513258113,
-        "total_power": 4260.58745982482
+        "step": 2600,
+        "drift": 0.16998220085485202,
+        "noise": 0.026286591937721152,
+        "total_power": 5038.705617436756
+      },
+      {
+        "step": 2700,
+        "drift": 0.1808575552526374,
+        "noise": 0.025111357481611744,
+        "total_power": 4992.462973769191
+      },
+      {
+        "step": 2800,
+        "drift": 0.19389777846731007,
+        "noise": 0.021750408120702218,
+        "total_power": 4968.900210140372
+      },
+      {
+        "step": 2900,
+        "drift": 0.1828787723227685,
+        "noise": 0.024187606128258463,
+        "total_power": 4959.175059407891
       },
       {
         "step": 3000,
-        "delta": 0.08663855236624668,
-        "total_power": 4660.264618005612
+        "drift": 0.166863925941832,
+        "noise": 0.026385089453567073,
+        "total_power": 4912.4879242088155
       },
       {
-        "step": 3250,
-        "delta": 0.09050194652347564,
-        "total_power": 5123.993992260943
+        "step": 3100,
+        "drift": 0.1444195598997106,
+        "noise": 0.02825749160282697,
+        "total_power": 4876.245753948444
       },
       {
-        "step": 3500,
-        "delta": 0.09425554407253046,
-        "total_power": 5644.433957985205
+        "step": 3200,
+        "drift": 0.10011483005162447,
+        "noise": 0.02983231128930802,
+        "total_power": 4825.101503716604
       },
       {
-        "step": 3750,
-        "delta": 0.07675516915246068,
-        "total_power": 5242.469704443137
+        "step": 3300,
+        "drift": 0.04742898050668638,
+        "noise": 0.0307326177302025,
+        "total_power": 4793.939019940941
       },
       {
-        "step": 4000,
-        "delta": 0.003019081966663155,
-        "total_power": 5257.987807783152
-      },
-      {
-        "step": 4250,
-        "delta": 0.07549167485159292,
-        "total_power": 4888.9153963081135
-      },
-      {
-        "step": 4500,
-        "delta": 0.10715826960318753,
-        "total_power": 5475.670105625138
-      },
-      {
-        "step": 4750,
-        "delta": 0.011017501660181521,
-        "total_power": 5432.00797852474
-      },
-      {
-        "step": 5000,
-        "delta": 0.00861208681687317,
-        "total_power": 5393.699583365741
-      },
-      {
-        "step": 5250,
-        "delta": 0.021659577640172477,
-        "total_power": 5279.981685958085
-      },
-      {
-        "step": 5500,
-        "delta": 0.05241786292916551,
-        "total_power": 5570.6434532628855
-      },
-      {
-        "step": 5750,
-        "delta": 0.026954460068069626,
-        "total_power": 5434.992533017666
-      },
-      {
-        "step": 6000,
-        "delta": 0.0033387600319867545,
-        "total_power": 5417.398158409408
-      },
-      {
-        "step": 6250,
-        "delta": 0.04122250499398689,
-        "total_power": 5204.663828392645
-      },
-      {
-        "step": 6500,
-        "delta": 0.025430881863399587,
-        "total_power": 5338.767874937413
-      },
-      {
-        "step": 6750,
-        "delta": 0.08605955518686666,
-        "total_power": 5841.483332132206
-      },
-      {
-        "step": 7000,
-        "delta": 0.017386116783865625,
-        "total_power": 5758.779048281097
-      },
-      {
-        "step": 7250,
-        "delta": 0.04366705323198264,
-        "total_power": 6008.68303219838
-      },
-      {
-        "step": 7500,
-        "delta": 0.009938121978747157,
-        "total_power": 6042.703285109838
-      },
-      {
-        "step": 7750,
-        "delta": 0.10838865374299875,
-        "total_power": 5470.237322929838
-      },
-      {
-        "step": 8000,
-        "delta": 0.007624235233471821,
-        "total_power": 5499.180746882897
+        "step": 3400,
+        "drift": 0.008924402616604902,
+        "noise": 0.029538426032233996,
+        "total_power": 4777.594469850483
       }
     ]
   }

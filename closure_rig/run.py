@@ -66,16 +66,20 @@ def plot_e0(res, outdir, name):
 
     w = res.get('E0.4_warmup')
     if w and w['trace']:
-        steps = [t['step'] for t in w['trace'] if t['delta'] is not None]
-        deltas = [t['delta'] for t in w['trace'] if t['delta'] is not None]
-        power = [t['total_power'] for t in w['trace']]
+        pts = [t for t in w['trace'] if t.get('drift') is not None]
         allsteps = [t['step'] for t in w['trace']]
+        power = [t['total_power'] for t in w['trace']]
         fig, axes = plt.subplots(1, 2, figsize=(9, 3.4))
-        axes[0].semilogy(steps, deltas, '-')
-        axes[0].axhline(w['tol'], ls='--', c='r', label=f"tol={w['tol']}")
+        if pts:
+            # Drift against its own noise floor: settling is where they cross,
+            # so both curves have to be on the plot for it to mean anything.
+            axes[0].semilogy([t['step'] for t in pts], [t['drift'] for t in pts],
+                             '-', label='split-half drift')
+            axes[0].semilogy([t['step'] for t in pts], [t['noise'] for t in pts],
+                             '--', c='r', label='noise floor')
         if w['settled']:
             axes[0].axvline(w['warmup_steps'], ls=':', c='g', label='settled')
-        axes[0].set_xlabel('step'); axes[0].set_ylabel('spectral change')
+        axes[0].set_xlabel('step'); axes[0].set_ylabel('spectral drift')
         axes[0].legend(fontsize=8)
         axes[1].semilogy(allsteps, power, '-')
         axes[1].set_xlabel('step'); axes[1].set_ylabel('total canvas power')

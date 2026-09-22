@@ -23,10 +23,37 @@ def load(out):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default='results')
+    ap.add_argument('--no-plots', action='store_true')
     args = ap.parse_args(argv)
     runs = load(args.out)
     if not runs:
         print('no summaries found'); return
+
+    if not args.no_plots:
+        from .run import plot_e0
+        for name, r in runs.items():
+            try:
+                plot_e0(r, os.path.join(args.out, name), name)
+            except Exception as e:
+                print(f'  plot failed for {name}: {e}')
+
+    # Aggregate is rebuilt here rather than only inside run_all, so it survives
+    # a crash partway through a sweep.
+    with open(os.path.join(args.out, 'e0_aggregate.csv'), 'w', newline='') as f:
+        wr = csv.writer(f)
+        wr.writerow(['config', 'particles_per_pixel', 'memory_time_steps', 'steps_per_sec',
+                     'propagator_max_rel_err', 'warmup_steps', 'warmup_settled',
+                     'warmup_in_memory_times'])
+        for name, r in sorted(runs.items()):
+            wm = r.get('E0.4_warmup', {})
+            wr.writerow([
+                name, round(r['meta']['particles_per_pixel'], 4),
+                round(r['meta']['memory_time_steps'], 2),
+                round(r['E0.1_throughput']['steps_per_sec'], 2),
+                f"{r['E0.3_propagator']['max_rel_error']:.3e}",
+                wm.get('warmup_steps', ''), wm.get('settled', ''),
+                round(wm.get('warmup_in_memory_times', 0), 1) if wm else '',
+            ])
 
     any_meta = next(iter(runs.values()))['meta']
     soft = any_meta['gpu']['software_rendered']
