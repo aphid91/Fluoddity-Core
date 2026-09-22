@@ -6,6 +6,10 @@ For more information see the Readme for Fluoddity
 
 It also hosts this claude coded webgl port of the core engine: https://aphid91.github.io/Fluoddity-Core/ This demo can be found in the docs/ folder ("docs" folder is for github pages integration)
 
+## Controls
+- `R` -- reset the simulation. Particles return to their starting positions; the existing trails are left to fade on their own rather than being wiped, same as the web port.
+- `Left` / `Right` -- step backwards/forwards through the configs in `physics_configs/`, wrapping at either end. The running config's name goes in the window title.
+
 ## Configs
 Configs live in `physics_configs/`. Most of them are the `physics_configs/Core` set from the full Fluoddity repo, which is the subset that only uses parameters this engine implements. Two settings are read from the config beyond the raw physics parameters:
 

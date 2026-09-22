@@ -144,6 +144,22 @@ class ParticleSystem:
         """Reset simulation state."""
         self.frame_count = 0
 
+    def set_config(self, config_path):
+        """Swap in a different config and restart the simulation with it.
+
+        A config that fails to load leaves the running one untouched, so a typo in a
+        json file doesn't take the whole program down mid-tinker.
+        """
+        try:
+            new_config = load_config(config_path)
+        except Exception as e:
+            print(f"Failed to load config {config_path}: {e}")
+            return False
+        self.config = new_config
+        self.config_path = config_path
+        self.reset()
+        return True
+
     def update_entities(self):
         """Dispatch compute shader to update entity positions."""
 
