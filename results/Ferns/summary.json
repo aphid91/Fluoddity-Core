@@ -884,7 +884,9 @@
         0.1754865837097168
       ],
       "tau_orient_steps": 79.29530862667278,
-      "acf_at_lag_2": 0.8764118448893229
+      "acf_at_lag_2": 0.8764118448893229,
+      "tau_orient_censored": false,
+      "lag_window_steps": 400
     },
     "odd_lag_diagnostic": {
       "lags": [
@@ -1971,7 +1973,11 @@
     "tau_canvas_pattern_steps": 2410.566281615581,
     "canvas_tau_max": 4000,
     "separation_ratio": 30.399860008927845,
-    "separation_note": null
+    "separation_note": null,
+    "fast_timescale_steps": 79.29530862667278,
+    "tau_orient_censored": false,
+    "tau_canvas_censored": false,
+    "separation_is_upper_bound": false
   },
   "E2_frozen": [
     {

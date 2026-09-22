@@ -197,8 +197,16 @@ def run(rig, track_steps=1200, n_tracked=4096, max_lag=400,
     tau_canvas = _decay_time(np.array([t for t, _ in pattern_curve]),
                              np.array([c for _, c in pattern_curve]))
 
-    fast = max([v for v in (tau_orient, tau_cross) if v is not None], default=None)
+    # If the heading never decayed to 1/e inside the window, tau_orient is
+    # censored, not absent. Dropping it would silently fall back to tau_cross
+    # and report a hugely optimistic separation -- excluding the slowest fast
+    # variable precisely because it was too slow to measure. Treat the window
+    # length as a lower bound on it instead, which makes the ratio an upper bound.
+    orient_censored = tau_orient is None
+    tau_orient_eff = tau_orient if tau_orient is not None else float(even[-1])
+    fast = max([v for v in (tau_orient_eff, tau_cross) if v is not None], default=None)
     separation = (tau_canvas / fast) if (tau_canvas and fast) else None
+    canvas_censored = tau_canvas is None
 
     return {
         'lags_are_even_only': True,
@@ -216,6 +224,8 @@ def run(rig, track_steps=1200, n_tracked=4096, max_lag=400,
             'lags': even.tolist(),
             'acf_even': [None if not np.isfinite(v) else float(v) for v in acf_even],
             'tau_orient_steps': tau_orient,
+            'tau_orient_censored': orient_censored,
+            'lag_window_steps': int(even[-1]),
             'acf_at_lag_2': float(acf_even[0]),
         },
         # Diagnostic only. If acf_at_lag_1 is strongly negative the velocity is
@@ -241,7 +251,14 @@ def run(rig, track_steps=1200, n_tracked=4096, max_lag=400,
         'tau_canvas_pattern_steps': tau_canvas,
         'canvas_tau_max': int(canvas_tau_max),
         'separation_ratio': separation,
-        'separation_note': (None if separation else
-                            'tau_canvas did not decay to 1/e within canvas_tau_max; '
-                            'the ratio is a lower bound of canvas_tau_max / fast'),
+        'fast_timescale_steps': fast,
+        'tau_orient_censored': orient_censored,
+        'tau_canvas_censored': canvas_censored,
+        'separation_is_upper_bound': bool(orient_censored),
+        'separation_note': (
+            'tau_orient exceeded the %d-step lag window, so the fast timescale is a '
+            'lower bound and this ratio is an UPPER bound' % even[-1] if orient_censored
+            else None if separation else
+            'tau_canvas did not decay to 1/e within canvas_tau_max; the ratio is a '
+            'lower bound of canvas_tau_max / fast'),
     }
