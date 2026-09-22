@@ -1,0 +1,15 @@
+{
+  "purpose": "Distinguish a broken steady-state calculation from an artifact of freezing. E2 reported stationarity residuals of 2.4-4.3 on every config, which is suspicious enough to need a control.",
+  "method": "Zipper, warmed to its measured settled point (3300 steps), then 512 LIVE steps (canvas evolving normally) while accumulating the brush. The steady state implied by that live mean deposit is compared against the actual canvas.",
+  "config": "Zipper",
+  "persistence_used": 0.988,
+  "memory_time_steps": 83.3,
+  "window_steps": 512,
+  "propagate_from_Cstart_vs_actual_Cend": 0.5509,
+  "baseline_Cstart_vs_Cend": 1.0607,
+  "steady_state_vs_actual_Cend": 0.5509,
+  "magnitude_ratio_Css_over_Cend": 0.8862,
+  "e2_frozen_residual_for_zipper": [3.10, 2.82, 3.44],
+  "conclusion": "The machinery is sound: on a live canvas the implied steady state matches to 0.55 with the scale right (0.89), against a 1.06 baseline for how much the canvas moved. The ~3.0 residual in E2 is therefore dominated by the freezing artifact, not by a failure of quasi-equilibrium. propagate() and steady_state() agree exactly at this k because (p*beta)^512 has decayed to ~0.002, so the initial condition no longer contributes.",
+  "defect_identified": "E2 computes the stationarity residual from the deposit averaged over the FULL T_max window (4096 steps = 49 memory times for Zipper), which is far past T_opt. It should be evaluated at T_opt. Recomputing needs the per-probe accumulators, which are not currently saved, so this requires a re-run rather than a backfill."
+}
