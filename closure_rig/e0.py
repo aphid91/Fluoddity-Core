@@ -37,32 +37,40 @@ def throughput(rig, steps=50):
 
 
 # ---------------------------------------------------------------- E0.2
-def blend_check(rig, n_probe=64, seed=0):
+def blend_check(rig, grid=16, spacing=32):
     """Splat particles with known velocity and see what the texture holds.
 
     brush.frag writes vec4(vel, 0.01, 1.0) * kernel, and the blend is
-    (SRC_ALPHA, ONE) with src.a = kernel. So the framebuffer should accumulate
-    vel*kernel^2 in .xy and kernel^2 in .w -- i.e. the stored deposit is
-    kernel-SQUARED weighted, and .w is a density proxy only up to how much
-    kernel^2 a particle happens to contribute from its sub-pixel position.
+    (SRC_ALPHA, ONE) with src.a = kernel, so the framebuffer accumulates
+    vel*kernel^2 in .xy and kernel^2 in .w. The deposit is kernel-SQUARED
+    weighted and .w is the natural density proxy.
 
-    That last caveat matters: the splat quad is ~1.5 px across, so where a
-    particle sits inside its pixel changes how much of the Gaussian is sampled.
-    This measures that spread, because it sets the noise floor on any density
-    estimate built from brush.w.
+    The catch this measures: the splat quad is ~1.5 px across and the Gaussian
+    inside it has sigma ~0.25 px, so it is point-sampled at only a handful of
+    pixel centres. How much kernel^2 a particle contributes therefore depends
+    strongly on where it sits within its pixel. The sweep below walks a
+    grid x grid lattice of sub-pixel offsets and quantifies that spread,
+    because it sets the noise floor on any density estimate built from brush.w
+    and hence on E2's convergence time.
+
+    Nothing here depends on the config: no config uniform reaches brush.frag,
+    and the splat size comes from a #define. Run it once, not once per config.
     """
     N = rig.canvas_dim
-    rng = np.random.default_rng(seed)
     vel = np.array([0.004, -0.002], dtype=np.float32)
 
-    # --- single isolated particle: exact deposit relationship
-    ents = np.zeros((ENTITY_COUNT, FLOATS_PER_ENTITY), dtype=np.float32)
-    ents[0] = (0.0, 0.0, vel[0], vel[1], DEFAULT_SIZE, 0.0)
-    rig.system.entity_buffer.write(ents.tobytes())
-    rig.system.frame_count = 1            # brush.frag discards when frame_count == 0
-    rig.system.create_brush()
-    rig.ctx.finish()
-    b = rig.read_brush()
+    def splat(rows):
+        ents = np.zeros((ENTITY_COUNT, FLOATS_PER_ENTITY), dtype=np.float32)
+        for i, r in enumerate(rows):
+            ents[i] = r
+        rig.system.entity_buffer.write(ents.tobytes())
+        rig.system.frame_count = 1   # brush.frag discards when frame_count == 0
+        rig.system.create_brush()
+        rig.ctx.finish()
+        return rig.read_brush()
+
+    # --- one isolated particle: the exact deposit relationship
+    b = splat([(0.0, 0.0, vel[0], vel[1], DEFAULT_SIZE, 0.0)])
     s = b.reshape(-1, 4).sum(axis=0)
     single = {
         'sum_xy': [float(s[0]), float(s[1])],
@@ -71,53 +79,63 @@ def blend_check(rig, n_probe=64, seed=0):
         'recovered_vel': [float(s[0] / s[3]), float(s[1] / s[3])],
         'true_vel': [float(vel[0]), float(vel[1])],
         'vel_recovered_exactly': bool(np.allclose(s[:2] / s[3], vel, rtol=1e-4)),
-        'z_over_w': float(s[2] / s[3]),   # should be the 0.01 literal in brush.frag
-        'footprint_pixels': int((np.abs(b[..., 3]) > 0).sum()),
+        'z_over_w': float(s[2] / s[3]),      # the 0.01 literal in brush.frag
+        'footprint_pixels': int((b[..., 3] > 0).sum()),
     }
 
-    # --- many well-separated particles at random sub-pixel offsets, one splat.
-    # Spacing >> kernel width, so each particle's deposit can be summed locally.
-    spacing = 32
-    grid = np.arange(spacing // 2, N, spacing)
-    cells = [(x, y) for y in grid for x in grid][:n_probe]
-    ents = np.zeros((ENTITY_COUNT, FLOATS_PER_ENTITY), dtype=np.float32)
-    for i, (px, py) in enumerate(cells):
-        jx, jy = rng.random(2)            # sub-pixel offset within the cell
-        wx = ((px + jx) / N) * 2.0 - 1.0
-        wy = ((py + jy) / N) * 2.0 - 1.0
-        ents[i] = (wx, wy, vel[0], vel[1], DEFAULT_SIZE, 0.0)
-    rig.system.entity_buffer.write(ents.tobytes())
-    rig.system.frame_count = 1
-    rig.system.create_brush()
-    rig.ctx.finish()
-    b = rig.read_brush()
-    r = 8
-    masses = []
-    for px, py in cells:
-        y0, y1 = max(0, py - r), min(N, py + r + 1)
-        x0, x1 = max(0, px - r), min(N, px + r + 1)
-        masses.append(float(b[y0:y1, x0:x1, 3].sum()))
-    masses = np.array(masses)
-    total_w = float(b[..., 3].sum())
+    # --- deterministic sub-pixel sweep. grid*spacing must tile the canvas
+    # exactly, or probes fall off the edge and read back as empty windows.
+    if grid * spacing != N:
+        spacing = N // grid
+    r = spacing // 2 - 4                      # window well inside the cell
+    rows, cells = [], []
+    for i in range(grid * grid):
+        px, py = spacing // 2 + (i % grid) * spacing, spacing // 2 + (i // grid) * spacing
+        fx, fy = (i % grid) / grid, (i // grid) / grid
+        rows.append((((px + fx) / N) * 2 - 1, ((py + fy) / N) * 2 - 1,
+                     vel[0], vel[1], DEFAULT_SIZE, 0.0))
+        cells.append((px, py))
+    b = splat(rows)
+
+    def window(px, py, c):
+        return b[py - r:py + r + 1, px - r:px + r + 1, c]
+
+    mass = np.array([window(px, py, 3).sum() for px, py in cells])
+    vx = np.array([window(px, py, 0).sum() for px, py in cells])
+    npix = np.array([(window(px, py, 3) > 0).sum() for px, py in cells])
+    cv = float(mass.std() / mass.mean())
+    quad_px = DEFAULT_SIZE * rig.px_per_world
     return {
+        'quad_px': float(2 * quad_px),
+        'sigma_px': float(0.163 * 2 * quad_px),
         'single_particle': single,
-        'subpixel': {
-            'n_probes': len(masses),
-            'mean_kernel_sq': float(masses.mean()),
-            'std_kernel_sq': float(masses.std()),
-            'cv_percent': float(100.0 * masses.std() / masses.mean()),
-            'min_over_max': float(masses.min() / masses.max()),
-            # If local windows recover the global total, the splats really are
-            # independent and additive blending is doing what we assume.
-            'local_sums_match_global': bool(
-                np.isclose(masses.sum(), total_w, rtol=1e-3)
-            ),
+        'subpixel_sweep': {
+            'grid': grid,
+            'n_probes': int(mass.size),
+            # If the per-cell windows recover the global total, the splats really
+            # are isolated and additive blending does what we assume.
+            'windows_captured_all': bool(np.isclose(mass.sum(), b[..., 3].sum(), rtol=1e-4)),
+            'min_kernel_sq': float(mass.min()),
+            'median_kernel_sq': float(np.median(mass)),
+            'mean_kernel_sq': float(mass.mean()),
+            'max_kernel_sq': float(mass.max()),
+            'max_over_min': float(mass.max() / max(mass.min(), 1e-30)),
+            'cv_percent': 100.0 * cv,
+            'min_pixels_touched': int(npix.min()),
+            'max_pixels_touched': int(npix.max()),
+            # m = brush.xy/brush.w is a ratio, so the kernel^2 weighting cancels
+            # and velocity comes back exactly however badly the mass is aliased.
+            'max_vel_deviation': float(np.abs(vx / mass - vel[0]).max()),
+            # Density built on brush.w is noisier than a count by this factor.
+            'variance_inflation': float(1.0 + cv ** 2),
+            'effective_sample_fraction': float(1.0 / (1.0 + cv ** 2)),
         },
         'interpretation': (
-            'brush.xy = sum(vel * k^2); brush.w = sum(k^2); brush.z = sum(0.01 * k^2). '
-            'Mean deposited velocity m = brush.xy / brush.w is exact. '
-            'brush.w is proportional to particle count only up to the sub-pixel '
-            'spread reported above.'
+            'brush.xy = sum(vel*k^2); brush.w = sum(k^2); brush.z = sum(0.01*k^2). '
+            'm = brush.xy/brush.w is exact. brush.w is proportional to particle '
+            'count only up to the sub-pixel aliasing reported above, so a density '
+            'estimate from it carries variance_inflation times the variance of a '
+            'true count. Config-independent.'
         ),
     }
 

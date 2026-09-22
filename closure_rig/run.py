@@ -84,14 +84,17 @@ def plot_e0(res, outdir, name):
         plt.close(fig)
 
 
-def run_e0(rig, args, ctx):
+def run_e0(rig, args, ctx, blend=True):
+    """E0 for one config. blend=False skips E0.2, which is config-independent
+    and is written once as results/e0_blend_check.json by the batch runner."""
     res = {'meta': metadata(rig, args, ctx)}
     print('  E0.1 throughput ...', flush=True)
     res['E0.1_throughput'] = e0_mod.throughput(rig, steps=10 if args.quick else 50)
     print(f"       {res['E0.1_throughput']['steps_per_sec']:.2f} steps/sec", flush=True)
 
-    print('  E0.2 blend check ...', flush=True)
-    res['E0.2_blend'] = e0_mod.blend_check(rig, seed=args.seed)
+    if blend:
+        print('  E0.2 blend check ...', flush=True)
+        res['E0.2_blend'] = e0_mod.blend_check(rig)
 
     print('  E0.3 propagator ...', flush=True)
     ks = (1, 10) if args.quick else (1, 10, 100, 1000)
@@ -135,6 +138,10 @@ def main(argv=None):
     res = run_e0(rig, args, ctx)
     with open(os.path.join(outdir, 'summary.json'), 'w') as f:
         json.dump(res, f, indent=2)
+    # E0.2 is config-independent, so it also lands at the top level where the
+    # report picks it up once rather than per config.
+    with open(os.path.join(args.out, 'e0_blend_check.json'), 'w') as f:
+        json.dump(res['E0.2_blend'], f, indent=2)
     plot_e0(res, outdir, name)
     print(f"[{name}] -> {outdir}/summary.json", flush=True)
     return res

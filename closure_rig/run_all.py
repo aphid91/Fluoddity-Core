@@ -14,6 +14,7 @@ import os
 import traceback
 
 from . import configs as cfg_mod
+from . import e0 as e0_mod
 from . import run as run_mod
 from .harness import Rig, create_context
 
@@ -83,6 +84,20 @@ def main(argv=None):
             print(f"  WARNING: not found: {sorted(missing)}")
 
     ctx = create_context()          # one context reused across configs
+
+    # E0.2 depends on no config uniform (nothing from the config reaches
+    # brush.frag, and the splat size is a #define), so measure it once.
+    blend = None
+    if wanted:
+        print('\nE0.2 blend check (config-independent, run once) ...', flush=True)
+        blend = e0_mod.blend_check(Rig(wanted[0]['path'], ctx=ctx))
+        with open(os.path.join(args.out, 'e0_blend_check.json'), 'w') as f:
+            json.dump(blend, f, indent=2)
+        sp = blend['subpixel_sweep']
+        print(f"  deposit varies {sp['max_over_min']:.0f}x with sub-pixel position "
+              f"(CV {sp['cv_percent']:.0f}%); velocity still exact to "
+              f"{sp['max_vel_deviation']:.1e}", flush=True)
+
     results = {}
     for e in wanted:
         print(f"\n=== {e['name']} ({e['source']}) ===", flush=True)
@@ -95,7 +110,7 @@ def main(argv=None):
             )
             if args.quick:
                 sub.warmup_cap = min(sub.warmup_cap, 1500)
-            res = run_mod.run_e0(rig, sub, ctx)
+            res = run_mod.run_e0(rig, sub, ctx, blend=False)
             outdir = os.path.join(args.out, e['name'])
             os.makedirs(outdir, exist_ok=True)
             with open(os.path.join(outdir, 'summary.json'), 'w') as f:
